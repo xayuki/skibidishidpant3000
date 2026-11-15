@@ -59,22 +59,27 @@
         <button class="chat-profile-button" data-profile="${p.id}">View profile</button>
       </div>
       <div class="chat-day-divider"><span>Messages</span></div>
-      ${list.map(m=>`<article class="chat-message ${m.author==='me'?'mine':''}" data-message-id="${m.id}">
-        <img src="${m.author==='me'?(currentUserProfile?.image||avatar):p.image}" alt="">
-        <div class="chat-message-body">
-          ${m.replyText?`<div class="chat-reply-quote">${esc(m.replyText.slice(0,150))}</div>`:''}
-          <div class="chat-message-meta"><strong>${esc(m.author==='me'?(currentUserProfile?.name||'You'):p.name)}</strong><time>${esc(m.time||'Now')}${m.edited_at?' · edited':''}</time></div>
-          ${m.text?`<p>${esc(m.text)}</p>`:''}
-          ${(m.attachments||[]).map(a=>`<a class="chat-attachment" href="${esc(a.url||'#')}" target="_blank" rel="noopener">${esc(a.name||'Attachment')}</a>`).join('')}
-          ${(m.reactions||[]).length?`<div class="message-reactions">${m.reactions.map(r=>`<button data-react-message="${m.id}" data-emoji="${esc(r.emoji)}" class="${r.mine?'mine-reaction':''}">${esc(r.emoji)}</button>`).join('')}</div>`:''}
-          <div class="message-actions">
-            <button data-reply-message="${m.id}" type="button">Reply</button>
-            <button data-react-message="${m.id}" data-emoji="👍" type="button">👍</button>
-            <button data-react-message="${m.id}" data-emoji="❤️" type="button">❤️</button>
-            <button data-react-message="${m.id}" data-emoji="😂" type="button">😂</button>
+      ${list.map((m,index)=>{
+        const previous=list[index-1];
+        const grouped=!!previous && previous.author===m.author && !m.reply_to && !previous.reply_to;
+        const authorName=m.author==='me'?(currentUserProfile?.name||'You'):p.name;
+        const authorImage=m.author==='me'?(currentUserProfile?.image||avatar):p.image;
+        return `<article class="chat-message ${m.author==='me'?'mine':''} ${grouped?'grouped':''}" data-message-id="${m.id}">
+          ${grouped?'<span class="chat-message-gutter-time">'+esc(m.time||'')+'</span>':`<img src="${authorImage}" alt=""> `}
+          <div class="chat-message-body">
+            ${m.replyText?`<div class="chat-reply-quote">${esc(m.replyText.slice(0,150))}</div>`:''}
+            ${grouped?'':`<div class="chat-message-meta"><strong>${esc(authorName)}</strong><time>${esc(m.time||'Now')}${m.edited_at?' · edited':''}</time></div>`}
+            ${m.text?`<p>${esc(m.text)}</p>`:''}
+            ${(m.attachments||[]).map(a=>`<a class="chat-attachment" href="${esc(a.url||'#')}" target="_blank" rel="noopener">${esc(a.name||'Attachment')}</a>`).join('')}
+            ${(m.reactions||[]).length?`<div class="message-reactions">${m.reactions.map(r=>`<button data-react-message="${m.id}" data-emoji="${esc(r.emoji)}" class="${r.mine?'mine-reaction':''}">${esc(r.emoji)}</button>`).join('')}</div>`:''}
+            <div class="message-actions">
+              <button data-open-reaction="${m.id}" type="button" aria-label="Add reaction">☺</button>
+              <button data-reply-message="${m.id}" type="button">Reply</button>
+              ${m.author==='me'?'<button data-delete-message="'+m.id+'" type="button">Delete</button>':''}
+            </div>
           </div>
-        </div>
-      </article>`).join('')}
+        </article>`;
+      }).join('')}
     `;
     $('#mobileChatMessages').scrollTop=$('#mobileChatMessages').scrollHeight;
   };
@@ -357,9 +362,21 @@
   $('#mobileChatMessages').addEventListener('click',async e=>{
     const reply=e.target.closest('[data-reply-message]');
     const react=e.target.closest('[data-react-message]');
-    if(reply) window.XaynetBackend.setReplyTarget(reply.dataset.replyMessage);
-    if(react) { try { await window.XaynetBackend.toggleReaction(react.dataset.reactMessage,react.dataset.emoji); } catch(err) { console.error(err); } }
+    const picker=e.target.closest('[data-open-reaction]');
+    const remove=e.target.closest('[data-delete-message]');
+    if(reply){window.XaynetBackend.setReplyTarget(reply.dataset.replyMessage);return;}
+    if(react){try{await window.XaynetBackend.toggleReaction(react.dataset.reactMessage,react.dataset.emoji);}catch(err){openModal('Reaction failed','<p class="modal-description">'+esc(err.message||'Could not add reaction.')+'</p>');}return;}
+    if(picker){openReactionPicker(picker.dataset.openReaction);return;}
+    if(remove){openModal('Delete Message','<p class="modal-description">Delete this message? This cannot be undone.</p><button class="modal-primary" id="confirmDeleteMessage">Delete Message</button>');$('#confirmDeleteMessage').onclick=async()=>{const button=$('#confirmDeleteMessage');button.disabled=true;button.textContent='Deleting…';try{await window.XaynetBackend.deleteMessage(remove.dataset.deleteMessage);closeModal();}catch(err){button.disabled=false;button.textContent='Delete Message';openModal('Could not delete message','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>');}};return;}
+    const row=e.target.closest('.chat-message');
+    if(row && !e.target.closest('a,button'))row.classList.toggle('actions-open');
   });
+  const openReactionPicker = messageId => {
+    const common=['👍','❤️','😂','🔥','😭','😍','👀','🎉','🙏','💀','🤔','😎','🥹','😮','😡','👏','💯','✨','🫡','🤝','🫶','🤣','😊','🙃','😴','🤯','🥳','😈','👎','❤️‍🔥','💔','⭐','🚀','🍿','🐈','🐸','🌙','☀️'];
+    openModal('Add Reaction','<p class="modal-description">choose an emoji or enter any emoji supported by your device.</p><div class="emoji-picker-grid">'+common.map(emoji=>'<button type="button" data-picker-emoji="'+emoji+'">'+emoji+'</button>').join('')+'</div><label class="modal-label" for="customReactionEmoji">Any emoji</label><input class="modal-input" id="customReactionEmoji" placeholder="paste or type an emoji"><button class="modal-primary" id="sendCustomReaction">Add Reaction</button>');
+    $('#mobileModal').querySelectorAll('[data-picker-emoji]').forEach(button=>button.onclick=async()=>{try{await window.XaynetBackend.toggleReaction(messageId,button.dataset.pickerEmoji);closeModal();}catch(err){openModal('Reaction failed','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>');}});
+    $('#sendCustomReaction').onclick=async()=>{const emoji=$('#customReactionEmoji').value.trim();if(!emoji)return;try{await window.XaynetBackend.toggleReaction(messageId,emoji);closeModal();}catch(err){openModal('Reaction failed','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>');}};
+  };
   $('#mobileModal').addEventListener('click',e=>{
     const newChat=e.target.closest('[data-new-chat]');if(newChat){const id=newChat.dataset.newChat;closeModal();Promise.resolve(window.XaynetBackend?.startDm(id)).then(()=>openChat(id)).catch(err=>openModal('Could not start conversation','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>'));return;}
     const friend=e.target.closest('[data-friend-chat]');if(friend){const id=friend.dataset.friendChat;closeModal();tab='messages';render();openChat(id);return;}
