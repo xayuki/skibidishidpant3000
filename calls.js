@@ -2,7 +2,7 @@
   'use strict';
   const $ = (s, r=document) => r.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let channel=null, userId=null, call=null, pendingOffer=null, pendingIce=[], seen=new Set();
+  let channel=null, userId=null, call=null, pendingOffer=null, pendingIce=[], seen=new Set(), ringTimer=null;
   const ICE_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
   const root=document.createElement('section');
   root.id='xayCallDock';root.className='xay-call-dock';root.hidden=true;
@@ -16,7 +16,7 @@
   const status=t=>{const el=$('#xayCallStatus');if(el)el.textContent=t;};
   const setMode=mode=>{root.classList.toggle('audio-only',mode==='audio');};
   const show=(name,mode='audio')=>{root.hidden=false;root.classList.remove('minimized');$('#xayCallTitle').textContent=name||'Call';setMode(mode);};
-  const minimize=()=>root.classList.add('minimized');
+  const minimize=()=>root.classList.toggle('minimized');
   const send=async(kind,payload={})=>{
     if(!call||!userId)return;
     const {error}=await window.XaynetBackend.client.from('call_signals').insert({
@@ -46,7 +46,7 @@
     };
     pc.onconnectionstatechange=()=>{
       if(!call)return;
-      if(pc.connectionState==='connected')status('Connected');
+      if(pc.connectionState==='connected'){clearTimeout(ringTimer);status('Connected');}
       if(pc.connectionState==='disconnected')status('Connection interrupted…');
       if(pc.connectionState==='failed'){status('Connection failed — network may require a TURN relay');}
       if(pc.connectionState==='closed')status('Call ended');
@@ -68,7 +68,7 @@
     return stream;
   };
   const cleanup=async notify=>{
-    const old=call;call=null;pendingOffer=null;
+    const old=call;call=null;pendingOffer=null;clearTimeout(ringTimer);
     if(old){
       if(notify){try{call=old;await send('hangup');}catch{}call=null;}
       try{old.stream?.getTracks().forEach(t=>t.stop());}catch{}
@@ -122,7 +122,7 @@
       makePeerConnection();await acquireMedia(mode);
       const offer=await call.pc.createOffer();await call.pc.setLocalDescription(offer);
       await send('offer',{type:call.pc.localDescription.type,sdp:call.pc.localDescription.sdp,mode});
-      await sendQueuedCandidates();status('Calling '+peer.name+'…');
+      await sendQueuedCandidates();status('Calling '+peer.name+'…');ringTimer=setTimeout(()=>{if(call&&call.pc?.connectionState!=='connected')cleanup(true);},60000);
     }catch(error){await cleanup(false);throw error;}
   };
   const accept=async()=>{
@@ -136,7 +136,7 @@
       await flushCandidates();
       const answer=await call.pc.createAnswer();await call.pc.setLocalDescription(answer);
       await send('answer',{type:call.pc.localDescription.type,sdp:call.pc.localDescription.sdp});
-      await sendQueuedCandidates();status('Connecting…');
+      await sendQueuedCandidates();status('Connecting…');ringTimer=setTimeout(()=>{if(call&&call.pc?.connectionState!=='connected')cleanup(true);},60000);
     }catch(error){status(error.message||'Could not answer');await cleanup(true);}
   };
   const decline=async()=>{
