@@ -1963,4 +1963,4 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 @media(max-width:750px){.xaynet-global-announcement{top:calc(env(safe-area-inset-top,0px) + 5px);font-size:12px;padding:10px 11px}}
 
 .xaynet-admin-entry{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;color:#eee;cursor:pointer}.xaynet-admin-entry>span{display:flex;flex-direction:column;gap:4px}.xaynet-admin-entry strong{font-size:13px}.xaynet-admin-entry small{font-size:11px;color:#858585}.xaynet-admin-entry>i{color:#777;font-size:12px}
-.xaynet-owner-badge{display:inline-flex;vertical-align:middle;align-items:center;margin-left:4px;padding:2px 5px;border:1px solid #777;border-radius:4px;font:700 8px/1 system-ui,sans-serif;letter-spacing:.07em;color:#f5f5f5;background:#171717}
+.xaynet-owner-badge{display:inline-flex;vertical-align:middle;align-items:center;margin-left:2px;padding:1.5px 4px;border:1px solid #777;border-radius:4px;font:700 7px/1 system-ui,sans-serif;letter-spacing:.06em;color:#f5f5f5;background:#171717}
