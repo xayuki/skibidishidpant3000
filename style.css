@@ -1885,3 +1885,51 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
   .auth-gate.cloak-active .cloak-unlock-toggle{padding:8px 12px;font-size:10px}
   .auth-gate.cloak-active.cloak-auth-open .auth-panel{max-height:calc(100dvh - 40px);overflow-y:auto}
 }
+
+
+/* Cloak mobile polish: compact controls and a more legible playfield. */
+.auth-gate.cloak-active .cloak-game-actions{
+  top:max(54px,calc(env(safe-area-inset-top) + 48px));
+  left:auto;
+  right:16px;
+  width:auto;
+  justify-content:flex-end;
+}
+.auth-gate.cloak-active .cloak-game-actions button{
+  min-width:0;
+  height:32px;
+  padding:0 13px;
+  border-radius:999px;
+  font-size:12px;
+  letter-spacing:.01em;
+}
+.auth-gate.cloak-active .cloak-game-heading strong{
+  font-size:13px;
+  letter-spacing:.16em;
+}
+.auth-gate.cloak-active .cloak-game-score{
+  font-size:13px;
+  letter-spacing:.03em;
+}
+.auth-gate.cloak-active .cloak-unlock-toggle{
+  min-height:36px;
+  padding:0 16px;
+  font-size:12px;
+  letter-spacing:.015em;
+}
+.auth-gate.cloak-active #cloakSnakeCanvas{
+  touch-action:none;
+}
+@media(max-width:750px){
+  .auth-gate.cloak-active .cloak-game-actions{
+    top:max(58px,calc(env(safe-area-inset-top) + 50px));
+    right:16px;
+  }
+  .auth-gate.cloak-active .cloak-game-actions button{
+    height:30px;
+    padding:0 12px;
+    font-size:11px;
+  }
+  .auth-gate.cloak-active .cloak-game-heading-right{gap:9px}
+  .auth-gate.cloak-active .cloak-unlock-toggle{min-height:34px;padding:0 13px}
+}
