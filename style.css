@@ -1285,7 +1285,7 @@ aside .icon i { background-color: #111; }
 .mobile-dm-unread{min-width:19px;height:19px;padding:0 5px;display:grid;place-items:center;border-radius:10px;background:#f2f3f5;color:#000;font-size:10px;font-weight:800;flex:none}
 .mobile-dm-row:has(.mobile-dm-unread) .mobile-dm-copy strong{color:#fff;font-weight:850}
 .mobile-tab{position:relative}
-.mobile-message-dot,.mobile-tab-dot{position:absolute;top:5px;right:calc(50% - 25px);width:9px;height:9px;border-radius:50%;background:#ff334f;font-size:0}
+.mobile-message-dot,.mobile-tab-dot{position:absolute;top:1px;right:calc(50% - 34px);width:9px;height:9px;border-radius:50%;background:#ff334f;font-size:0}
 .mobile-message-dot,.mobile-tab-dot{background:#ff334f!important;border:0!important;outline:0!important;box-shadow:none!important}
 .mobile-app[data-theme="oled"] .mobile-message-dot,.mobile-app[data-theme="oled"] .mobile-tab-dot{background:#ff334f!important;border:0!important;outline:0!important;box-shadow:none!important}
 
