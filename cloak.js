@@ -2,6 +2,7 @@
   'use strict';
   const LOCK_KEY='xaynet-cloak-locked';
   const TIMEOUT_KEY='xaynet-cloak-timeout';
+  const BUTTON_POS_KEY='xaynet-cloak-button-position';
   const $=(s,r=document)=>r.querySelector(s);
   const gate=$('#authGate');
   const panel=$('.auth-panel',gate);
@@ -59,8 +60,46 @@
   const quick=document.createElement('button');
   quick.type='button';quick.className='cloak-quick-lock';quick.setAttribute('aria-label','Lock XAYNET with Cloak');quick.title='Lock with Cloak';
   quick.innerHTML='<i class="fa-solid fa-lock"></i>';
-  quick.addEventListener('click',lock);
+  let dragStart=null, dragged=false;
+  const restoreButtonPosition=()=>{
+    try{
+      const p=JSON.parse(localStorage.getItem(BUTTON_POS_KEY)||'null');
+      if(p&&Number.isFinite(p.x)&&Number.isFinite(p.y)){
+        quick.style.left=(Math.max(0,Math.min(1,p.x))*Math.max(0,innerWidth-46))+'px';
+        quick.style.top=(Math.max(0,Math.min(1,p.y))*Math.max(0,innerHeight-46))+'px';
+        quick.style.right='auto';quick.style.bottom='auto';
+      }
+    }catch{}
+  };
+  quick.addEventListener('pointerdown',e=>{
+    if(e.button!==0&&e.pointerType==='mouse')return;
+    const r=quick.getBoundingClientRect();
+    dragStart={x:e.clientX,y:e.clientY,left:r.left,top:r.top,pointerId:e.pointerId};
+    dragged=false;quick.setPointerCapture?.(e.pointerId);
+  });
+  quick.addEventListener('pointermove',e=>{
+    if(!dragStart||dragStart.pointerId!==e.pointerId)return;
+    const dx=e.clientX-dragStart.x,dy=e.clientY-dragStart.y;
+    if(!dragged&&Math.hypot(dx,dy)<7)return;
+    dragged=true;
+    const left=Math.max(0,Math.min(innerWidth-46,dragStart.left+dx));
+    const top=Math.max(0,Math.min(innerHeight-46,dragStart.top+dy));
+    quick.style.left=left+'px';quick.style.top=top+'px';quick.style.right='auto';quick.style.bottom='auto';
+  });
+  const finishDrag=e=>{
+    if(!dragStart||dragStart.pointerId!==e.pointerId)return;
+    if(dragged){
+      const r=quick.getBoundingClientRect();
+      try{localStorage.setItem(BUTTON_POS_KEY,JSON.stringify({x:r.left/Math.max(1,innerWidth-46),y:r.top/Math.max(1,innerHeight-46)}));}catch{}
+    }
+    dragStart=null;
+  };
+  quick.addEventListener('pointerup',finishDrag);
+  quick.addEventListener('pointercancel',finishDrag);
+  quick.addEventListener('click',e=>{if(dragged){e.preventDefault();e.stopImmediatePropagation();dragged=false;return;}lock();});
   document.body.appendChild(quick);
+  restoreButtonPosition();
+  window.addEventListener('resize',restoreButtonPosition);
 
   const settings=()=>{
     const old=$('#cloakSettingsOverlay');old?.remove();
@@ -85,17 +124,20 @@
   function startSnake(){
     const canvas=$('#cloakSnakeCanvas');
     if(!canvas||gameTimer)return;
-    const ctx=canvas.getContext('2d'), size=18, cell=canvas.width/size;
+    const ctx=canvas.getContext('2d'), size=22, cell=Math.min(canvas.width,canvas.height)/size;
     let snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}],dir={x:1,y:0},next={x:1,y:0},food={x:12,y:9},score=0,dead=false;
     const scoreEl=$('#cloakSnakeScore'), start=$('#cloakSnakeStart');
     const placeFood=()=>{let p;do{p={x:Math.floor(Math.random()*size),y:Math.floor(Math.random()*size)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));food=p;};
+    const resize=()=>{const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);};
+    resize();window.addEventListener('resize',resize);
     const draw=()=>{
+      const ox=(canvas.width-size*cell)/2,oy=(canvas.height-size*cell)/2;
       ctx.fillStyle='#020202';ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.strokeStyle='#101010';ctx.lineWidth=1;
-      for(let i=1;i<size;i++){ctx.beginPath();ctx.moveTo(i*cell,0);ctx.lineTo(i*cell,canvas.height);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*cell);ctx.lineTo(canvas.width,i*cell);ctx.stroke();}
-      ctx.fillStyle='#aaa';ctx.fillRect(food.x*cell+3,food.y*cell+3,cell-6,cell-6);
-      snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#fff':'#888';ctx.fillRect(s.x*cell+1,s.y*cell+1,cell-2,cell-2);});
-      if(dead){ctx.fillStyle='#fff';ctx.font='bold 17px sans-serif';ctx.textAlign='center';ctx.fillText('GAME OVER',canvas.width/2,canvas.height/2);ctx.font='11px sans-serif';ctx.fillText('tap restart to play again',canvas.width/2,canvas.height/2+20);}
+      for(let i=0;i<=size;i++){ctx.beginPath();ctx.moveTo(ox+i*cell,oy);ctx.lineTo(ox+i*cell,oy+size*cell);ctx.stroke();ctx.beginPath();ctx.moveTo(ox,oy+i*cell);ctx.lineTo(ox+size*cell,oy+i*cell);ctx.stroke();}
+      ctx.fillStyle='#aaa';ctx.fillRect(ox+food.x*cell+3,oy+food.y*cell+3,cell-6,cell-6);
+      snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#fff':'#888';ctx.fillRect(ox+s.x*cell+1,oy+s.y*cell+1,cell-2,cell-2);});
+      if(dead){ctx.fillStyle='#fff';ctx.font='bold 24px sans-serif';ctx.textAlign='center';ctx.fillText('GAME OVER',canvas.width/2,canvas.height/2);ctx.font='14px sans-serif';ctx.fillText('tap restart to play again',canvas.width/2,canvas.height/2+28);}
       if(scoreEl)scoreEl.textContent='SCORE '+score;
     };
     const step=()=>{
@@ -117,7 +159,7 @@
     canvas.onpointerdown=e=>{touch={x:e.clientX,y:e.clientY};};
     canvas.onpointerup=e=>{if(!touch)return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y;if(Math.abs(dx)>Math.abs(dy))setDir({x:Math.sign(dx),y:0});else setDir({x:0,y:Math.sign(dy)});touch=null;};
     draw();gameTimer=setInterval(step,145);
-    canvas._cloakCleanup=()=>document.removeEventListener('keydown',key);
+    canvas._cloakCleanup=()=>{document.removeEventListener('keydown',key);window.removeEventListener('resize',resize);};
   }
   function stopSnake(){
     if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
@@ -126,7 +168,7 @@
   if(panel&&!$('#cloakGame')) {
     const game=document.createElement('section');game.className='cloak-game';game.id='cloakGame';
     game.innerHTML='<div class="cloak-game-heading"><strong>Snake</strong><span class="cloak-game-score" id="cloakSnakeScore">SCORE 0</span></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Snake game"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>use arrow keys, WASD, or swipe</span></div><div class="cloak-game-pad" id="cloakGamePad"><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:-1}" aria-label="Up">↑</button><button type="button" data-dir="{&quot;x&quot;:-1,&quot;y&quot;:0}" aria-label="Left">←</button><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:1}" aria-label="Down">↓</button><button type="button" data-dir="{&quot;x&quot;:1,&quot;y&quot;:0}" aria-label="Right">→</button></div>';
-    const form=$('#authForm',panel);form?.parentNode.insertBefore(game,form);
+    gate?.appendChild(game);
   }
   setLockedAppearance();
   const authObserver=new MutationObserver(resetTimer);
