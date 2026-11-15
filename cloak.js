@@ -127,7 +127,7 @@
     const ctx=canvas.getContext('2d');
     const W=1800,H=1800;
     const colors=['#e7e7e7','#8b9cff','#ff9b72','#8bd8b0','#d7a5ff'];
-    let player, bots=[], pellets=[], regions=[], trail=[], score=0, last=performance.now(), elapsed=0;
+    let player, bots=[], regions=[], trail=[], score=0, last=performance.now(), elapsed=0, particles=[];
     let camera={x:W/2,y:H/2}, joystick=null, keys=new Set(), over=false;
     const scoreEl=$('#cloakSnakeScore'), start=$('#cloakSnakeStart');
     const resize=()=>{const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';ctx.setTransform(dpr,0,0,dpr,0,0);};
@@ -152,18 +152,23 @@
       player=spawn(0,W/2,H/2,0);setBase(player.x,player.y,0,92,92);
       bots=[spawn(1,340,350,1.1),spawn(2,1450,430,3.0),spawn(3,420,1450,-.5),spawn(4,1430,1400,2.4)];
       bots.forEach(b=>setBase(b.x,b.y,b.id,64,64));
-      pellets=Array.from({length:95},()=>({x:100+Math.random()*(W-200),y:100+Math.random()*(H-200),r:3+Math.random()*3}));
+      particles=[];
       trail=[];score=0;over=false;elapsed=0;camera={x:player.x,y:player.y};last=performance.now();
+    };
+    const polygonArea=points=>{let area=0;for(let i=0,j=points.length-1;i<points.length;j=i++)area+=points[j].x*points[i].y-points[i].x*points[j].y;return Math.abs(area/2);};
+    const burst=(points,color,count)=>{
+      if(!points.length)return;
+      const center=points.reduce((o,p)=>({x:o.x+p.x/points.length,y:o.y+p.y/points.length}),{x:0,y:0});
+      for(let i=0;i<count;i++){const a=Math.random()*Math.PI*2,speed=35+Math.random()*145;particles.push({x:center.x,y:center.y,vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,life:.55+Math.random()*.65,max:.9,size:2+Math.random()*4,color});}
     };
     const capture=(snake)=>{
       if(snake.trail.length<5)return;
       const points=snake.trail.map(p=>({x:p.x,y:p.y}));
       if(points.length>=3){
         regions.push({id:snake.id,points});
-        if(snake.id===0){
-          let area=0;for(let i=0,j=points.length-1;i<points.length;j=i++)area+=points[j].x*points[i].y-points[i].x*points[j].y;
-          score+=Math.max(1,Math.floor(Math.abs(area)/180));
-        }
+        const area=polygonArea(points);
+        if(snake.id===0)score+=Math.max(1,Math.floor(area/180));
+        burst(points, snake.color, snake.id===0?34:18);
       }
       snake.trail=[];snake.path=[];
     };
@@ -196,7 +201,7 @@
       s.path.push({x:s.x,y:s.y});
       if(s.path.length>120)s.path.shift();
       const own=pointOwned(s);
-      if(!own){s.trail.push({x:s.x,y:s.y});if(s.trail.length>160){if(s.id===0)over=true;else s.alive=false;}}
+      if(!own){s.trail.push({x:s.x,y:s.y});}
       else if(s.trail.length>5)capture(s);
       // Colliding with an exposed trail ends the run / bot.
       for(const other of [player,...bots]){
@@ -208,7 +213,11 @@
       if(!s.alive)return;
       const x=s.x-camera.x+innerWidth/2,y=s.y-camera.y+innerHeight/2;
       ctx.save();ctx.translate(x,y);ctx.rotate(s.angle);
-      ctx.fillStyle=s.id===0?'#fff':s.color;ctx.beginPath();ctx.moveTo(13,0);ctx.lineTo(-9,-7);ctx.lineTo(-6,0);ctx.lineTo(-9,7);ctx.closePath();ctx.fill();ctx.restore();
+      ctx.fillStyle=s.id===0?'#f4f4f4':s.color;
+      ctx.beginPath();ctx.arc(0,0,12,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#151515';ctx.beginPath();ctx.arc(4,-3,2,0,Math.PI*2);ctx.arc(4,3,2,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#151515';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(-2,0,4,-.7,.7);ctx.stroke();
+      ctx.restore();
       if(s.trail.length>1){ctx.beginPath();s.trail.forEach((p,i)=>{const xx=p.x-camera.x+innerWidth/2,yy=p.y-camera.y+innerHeight/2;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.strokeStyle=s.id===0?'#fff9':s.color+'99';ctx.lineWidth=3;ctx.setLineDash([5,7]);ctx.stroke();ctx.setLineDash([]);}
     };
     const draw=()=>{
@@ -222,8 +231,13 @@
         ctx.strokeStyle=region.id===0?'#777d86':colors[region.id]+'aa';ctx.lineWidth=2;ctx.stroke();
       });
       ctx.strokeStyle='#25282d';ctx.lineWidth=5;ctx.strokeRect(-left,-top,W,H);
-      pellets.forEach(p=>{const x=p.x-left,y=p.y-top;if(x>-10&&y>-10&&x<vw+10&&y<vh+10){ctx.fillStyle='#f3f3f3';ctx.beginPath();ctx.arc(x,y,p.r,0,Math.PI*2);ctx.fill();}});
+
+      // Soft capture particles
+      particles.forEach(p=>{const x=p.x-left,y=p.y-top;ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(x,y,p.size,0,Math.PI*2);ctx.fill();});ctx.globalAlpha=1;
       bots.forEach(drawSnake);drawSnake(player);
+      const scores=[player,...bots].map(s=>({id:s.id,area:regions.filter(r=>r.id===s.id).reduce((sum,r)=>sum+polygonArea(r.points),0)})).sort((a,b)=>b.area-a.area);
+      ctx.save();ctx.textAlign='left';ctx.font='600 12px system-ui';ctx.fillStyle='#f5f5f5';ctx.fillText('LEADERBOARD',16,76);
+      scores.forEach((item,i)=>{const y=98+i*22;ctx.fillStyle=colors[item.id];ctx.beginPath();ctx.arc(21,y-4,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e5e5e5';ctx.fillText((item.id===0?'YOU':'BOT '+item.id),32,y);ctx.textAlign='right';ctx.fillStyle='#aeb0b5';ctx.fillText(Math.round(item.area/100)+'%',innerWidth-18,y);ctx.textAlign='left';});ctx.restore();
       if(joystick){ctx.globalAlpha=.8;ctx.strokeStyle='#aaa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(joystick.cx,joystick.cy,54,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#ddd';ctx.beginPath();ctx.arc(joystick.knobX,joystick.knobY,22,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
       if(scoreEl)scoreEl.textContent='AREA '+score;
       if(over){ctx.fillStyle='#0009';ctx.fillRect(0,0,vw,vh);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='600 25px system-ui';ctx.fillText('RUN OVER',vw/2,vh/2-8);ctx.font='14px system-ui';ctx.fillStyle='#aaa';ctx.fillText('tap restart to play again',vw/2,vh/2+22);}
@@ -234,8 +248,8 @@
       if(!over){
         updateSnake(player,dt);bots.forEach(b=>updateSnake(b,dt));
         camera.x+=(player.x-camera.x)*Math.min(1,dt*5);camera.y+=(player.y-camera.y)*Math.min(1,dt*5);
-        pellets=pellets.filter(p=>{if(Math.hypot(player.x-p.x,player.y-p.y)<22){score+=2;return false;}return true;});
-        while(pellets.length<95)pellets.push({x:80+Math.random()*(W-160),y:80+Math.random()*(H-160),r:3+Math.random()*3});
+        particles=particles.filter(p=>p.life>0);
+        particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.985;p.vy*=.985;p.life-=dt;});
       }
       draw();gameTimer=requestAnimationFrame(tick);
     };
