@@ -1286,6 +1286,8 @@ aside .icon i { background-color: #111; }
 .mobile-dm-row:has(.mobile-dm-unread) .mobile-dm-copy strong{color:#fff;font-weight:850}
 .mobile-tab{position:relative}
 .mobile-message-dot,.mobile-tab-dot{position:absolute;top:3px;right:calc(50% - 18px);width:9px;height:9px;border-radius:50%;background:#ff334f;font-size:0}
+.mobile-message-dot,.mobile-tab-dot{background:#ff334f!important;border:0!important;outline:0!important;box-shadow:none!important}
+.mobile-app[data-theme="oled"] .mobile-message-dot,.mobile-app[data-theme="oled"] .mobile-tab-dot{background:#ff334f!important;border:0!important;outline:0!important;box-shadow:none!important}
 
 
 /* Mobile profile screen — stacked Discord-style profile cards */
