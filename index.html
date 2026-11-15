@@ -193,6 +193,8 @@
           <button class="mobile-chat-action" id="mobileChatMore" aria-label="More options"><i class="fa-solid fa-ellipsis-vertical"></i></button>
         </header>
         <div class="mobile-chat-messages" id="mobileChatMessages"></div>
+        <div class="mobile-typing-indicator" id="mobileTypingIndicator" aria-live="polite"></div>
+        <div class="mobile-reply-preview" id="mobileReplyPreview" hidden></div>
         <form class="mobile-composer" id="mobileComposer">
           <button type="button" class="composer-add" id="composerAdd" aria-label="Add attachment"><i class="fa-solid fa-plus"></i></button>
           <input id="mobileMessageInput" autocomplete="off" placeholder="Message @user..." aria-label="Message">
@@ -204,7 +206,34 @@
         <section class="mobile-modal" id="mobileModal" role="dialog" aria-modal="true"></section>
       </div>
     </div>
-\n    <script src="./script.js"></script>
+\n    <section class="auth-gate" id="authGate" aria-label="Sign in">
+      <div class="auth-panel">
+        <div class="auth-brand"><i class="fa-brands fa-discord"></i><span>Welcome back</span></div>
+        <p class="auth-intro" id="authIntro">Sign in to continue to your account.</p>
+        <form id="authForm" autocomplete="on">
+          <div class="auth-field" id="displayNameField" hidden>
+            <label for="authDisplayName">Display name</label>
+            <input id="authDisplayName" maxlength="40" autocomplete="name" placeholder="How people see you">
+          </div>
+          <div class="auth-field">
+            <label for="authHandle">Handle</label>
+            <input id="authHandle" maxlength="24" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="your_handle" required>
+          </div>
+          <div class="auth-field">
+            <label for="authPassword">Password</label>
+            <input id="authPassword" type="password" minlength="10" autocomplete="current-password" placeholder="Your password" required>
+          </div>
+          <button class="auth-submit" id="authSubmit" type="submit">Sign In</button>
+          <p class="auth-feedback" id="authFeedback" role="status" aria-live="polite"></p>
+        </form>
+        <button class="auth-mode-toggle" id="authModeToggle" type="button">Need an account? <strong>Create one</strong></button>
+        <p class="auth-footnote">No email address required. Keep your password safe — there is no email-based reset.</p>
+      </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0"></script>
+    <script src="./supabase-config.js"></script>
+    <script src="./script.js"></script>
+    <script src="./backend.js"></script>
 </body>
 
 </html>
