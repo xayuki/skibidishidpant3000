@@ -1851,3 +1851,20 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 .cloak-settings-modal .desktop-modal-body{color:#ddd}
 .cloak-settings-modal .desktop-modal-body button{border:1px solid #eee;background:#eee;color:#080808}
 .cloak-settings-modal .cloak-settings-row select{background:#050505;color:#fff;border-color:#333}
+
+/* Full-viewport Snake board; account sign-in remains visible above it. */
+.auth-gate.cloak-active{overflow:hidden;align-items:center;justify-content:center;padding:16px}
+.auth-gate.cloak-active .cloak-game{display:block;position:fixed;inset:0;z-index:0;margin:0;padding:0;border:0;border-radius:0;background:#020202}
+.auth-gate.cloak-active .cloak-game-canvas-wrap{position:fixed;inset:0;display:block}
+.auth-gate.cloak-active #cloakSnakeCanvas{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;aspect-ratio:auto;border:0;border-radius:0}
+.auth-gate.cloak-active .cloak-game-heading{position:fixed;top:max(18px,env(safe-area-inset-top));left:20px;right:20px;z-index:1;margin:0;pointer-events:none}
+.auth-gate.cloak-active .cloak-game-heading strong{color:#aaa}
+.auth-gate.cloak-active .cloak-game-score{color:#ddd}
+.auth-gate.cloak-active .cloak-game-actions{position:fixed;top:max(48px,calc(env(safe-area-inset-top) + 38px));left:20px;right:20px;z-index:1;margin:0;pointer-events:none}
+.auth-gate.cloak-active .cloak-game-actions button{pointer-events:auto;background:#111;border-color:#333;color:#eee}
+.auth-gate.cloak-active .cloak-game-actions span{display:none}
+.auth-gate.cloak-active .cloak-game-pad{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));z-index:1;transform:translateX(-50%);margin:0}
+.auth-gate.cloak-active .cloak-game-pad button{width:48px;height:44px;background:#101010dd;border-color:#444;font-size:18px}
+.auth-gate.cloak-active .auth-panel{position:relative;z-index:2;margin:auto;max-height:calc(100dvh - 32px);overflow-y:auto;background:rgba(7,7,7,.96);backdrop-filter:blur(16px);box-shadow:0 18px 70px #000b}
+.cloak-quick-lock{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.cloak-quick-lock:active{cursor:grabbing}
