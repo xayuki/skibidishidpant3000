@@ -1,0 +1,136 @@
+(() => {
+  'use strict';
+  const LOCK_KEY='xaynet-cloak-locked';
+  const TIMEOUT_KEY='xaynet-cloak-timeout';
+  const $=(s,r=document)=>r.querySelector(s);
+  const gate=$('#authGate');
+  const panel=$('.auth-panel',gate);
+  const locked=()=>{try{return localStorage.getItem(LOCK_KEY)==='1';}catch{return false;}};
+  let timer=null, lastActivity=Date.now(), gameTimer=null;
+  const timeoutMinutes=()=>{const n=Number(localStorage.getItem(TIMEOUT_KEY));return [1,3,5,10,15,0].includes(n)?n:5;};
+  const setLockedAppearance=()=>{
+    if(!gate||!panel)return;
+    const active=locked();
+    gate.classList.toggle('cloak-active',active);
+    if(active){
+      const brand=$('.auth-brand span',panel), intro=$('#authIntro'), foot=$('.auth-footnote',panel);
+      if(brand)brand.textContent='Cloak';
+      if(intro)intro.textContent='Cloak is locked. Sign in with your XAYNET account to unlock.';
+      if(foot)foot.textContent='Your conversations stay unavailable until your account is authenticated.';
+      $('#authModeToggle')?.setAttribute('hidden','');
+      if(window.XaynetBackend && window.XaynetBackend.client) {
+        // The lock screen intentionally uses the existing account sign-in form.
+      }
+      startSnake();
+    } else {
+      const brand=$('.auth-brand span',panel), intro=$('#authIntro'), foot=$('.auth-footnote',panel);
+      if(brand)brand.textContent='Welcome back';
+      if(intro)intro.textContent='Sign in to continue to your account.';
+      if(foot)foot.textContent='No email address required. Keep your password safe — there is no email-based reset.';
+      $('#authModeToggle')?.removeAttribute('hidden');
+      stopSnake();
+    }
+  };
+  const lock=async()=>{
+    if(!document.body.classList.contains('xaynet-authenticated'))return;
+    clearTimeout(timer);
+    if(window.XaynetBackend?.lockCloak)await window.XaynetBackend.lockCloak();
+    else {
+      try{localStorage.setItem(LOCK_KEY,'1');localStorage.removeItem('skibidi-chats');}catch{}
+      gate?.classList.remove('is-hidden');
+    }
+    setLockedAppearance();
+  };
+  const resetTimer=()=>{
+    clearTimeout(timer);
+    if(!document.body.classList.contains('xaynet-authenticated'))return;
+    const minutes=timeoutMinutes();
+    if(minutes>0)timer=setTimeout(lock,minutes*60*1000);
+  };
+  ['pointerdown','keydown','touchstart','mousemove','wheel'].forEach(type=>{
+    document.addEventListener(type,()=>{lastActivity=Date.now();resetTimer();},{passive:true});
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible'){
+      if(timeoutMinutes()>0 && Date.now()-lastActivity>=timeoutMinutes()*60000)lock();
+      else resetTimer();
+    }
+  });
+  const quick=document.createElement('button');
+  quick.type='button';quick.className='cloak-quick-lock';quick.setAttribute('aria-label','Lock XAYNET with Cloak');quick.title='Lock with Cloak';
+  quick.innerHTML='<i class="fa-solid fa-lock"></i>';
+  quick.addEventListener('click',lock);
+  document.body.appendChild(quick);
+
+  const settings=()=>{
+    const old=$('#cloakSettingsOverlay');old?.remove();
+    const overlay=document.createElement('div');overlay.id='cloakSettingsOverlay';overlay.className='desktop-modal-backdrop';
+    overlay.style.zIndex='100001';
+    const current=timeoutMinutes();
+    overlay.innerHTML='<section class="desktop-modal cloak-settings-modal"><header><strong>Cloak settings</strong><button type="button" aria-label="Close">×</button></header><div class="desktop-modal-body"><p class="cloak-settings-copy">Cloak locks XAYNET and signs out. Unlocking requires your account password. Choose how long XAYNET can sit idle before it locks automatically.</p><label class="cloak-settings-row"><span>Inactivity timeout</span><select id="cloakTimeout"><option value="1">1 minute</option><option value="3">3 minutes</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="0">Off</option></select></label><button id="cloakLockNow" class="modal-primary" type="button">Lock now</button></div></section>';
+    document.body.appendChild(overlay);
+    $('#cloakTimeout',overlay).value=String(current);
+    const close=()=>overlay.remove();
+    $('header button',overlay).onclick=close;
+    overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+    $('#cloakTimeout',overlay).onchange=e=>{try{localStorage.setItem(TIMEOUT_KEY,e.target.value);}catch{};lastActivity=Date.now();resetTimer();};
+    $('#cloakLockNow',overlay).onclick=()=>{close();lock();};
+  };
+  window.XaynetCloak={lock,openSettings:settings};
+  const observer=new MutationObserver(setLockedAppearance);
+  if(gate)observer.observe(gate,{attributes:true,attributeFilter:['class']});
+  setLockedAppearance();
+  document.addEventListener('DOMContentLoaded',setLockedAppearance);
+  setInterval(()=>{if(document.body.classList.contains('xaynet-authenticated'))resetTimer();},30000);
+
+  function startSnake(){
+    const canvas=$('#cloakSnakeCanvas');
+    if(!canvas||gameTimer)return;
+    const ctx=canvas.getContext('2d'), size=18, cell=canvas.width/size;
+    let snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}],dir={x:1,y:0},next={x:1,y:0},food={x:12,y:9},score=0,dead=false;
+    const scoreEl=$('#cloakSnakeScore'), start=$('#cloakSnakeStart');
+    const placeFood=()=>{let p;do{p={x:Math.floor(Math.random()*size),y:Math.floor(Math.random()*size)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));food=p;};
+    const draw=()=>{
+      ctx.fillStyle='#020202';ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.strokeStyle='#101010';ctx.lineWidth=1;
+      for(let i=1;i<size;i++){ctx.beginPath();ctx.moveTo(i*cell,0);ctx.lineTo(i*cell,canvas.height);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*cell);ctx.lineTo(canvas.width,i*cell);ctx.stroke();}
+      ctx.fillStyle='#aaa';ctx.fillRect(food.x*cell+3,food.y*cell+3,cell-6,cell-6);
+      snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#fff':'#888';ctx.fillRect(s.x*cell+1,s.y*cell+1,cell-2,cell-2);});
+      if(dead){ctx.fillStyle='#fff';ctx.font='bold 17px sans-serif';ctx.textAlign='center';ctx.fillText('GAME OVER',canvas.width/2,canvas.height/2);ctx.font='11px sans-serif';ctx.fillText('tap restart to play again',canvas.width/2,canvas.height/2+20);}
+      if(scoreEl)scoreEl.textContent='SCORE '+score;
+    };
+    const step=()=>{
+      if(dead)return;
+      dir=next;const head={x:(snake[0].x+dir.x+size)%size,y:(snake[0].y+dir.y+size)%size};
+      if(snake.some(s=>s.x===head.x&&s.y===head.y)){dead=true;draw();return;}
+      snake.unshift(head);
+      if(head.x===food.x&&head.y===food.y){score++;placeFood();}else snake.pop();
+      draw();
+    };
+    const setDir=d=>{if(d.x===-dir.x&&d.y===-dir.y)return;next=d;};
+    const key=e=>{const map={ArrowUp:{x:0,y:-1},w:{x:0,y:-1},ArrowDown:{x:0,y:1},s:{x:0,y:1},ArrowLeft:{x:-1,y:0},a:{x:-1,y:0},ArrowRight:{x:1,y:0},d:{x:1,y:0}};if(map[e.key]){e.preventDefault();setDir(map[e.key]);}};
+    document.addEventListener('keydown',key);
+    const controls=$$('#cloakGamePad button');
+    controls.forEach(b=>b.addEventListener('click',()=>setDir(JSON.parse(b.dataset.dir))));
+    const restart=()=>{snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}];dir=next={x:1,y:0};score=0;dead=false;placeFood();draw();};
+    start?.addEventListener('click',restart);
+    let touch=null;
+    canvas.addEventListener('pointerdown',e=>{touch={x:e.clientX,y:e.clientY};});
+    canvas.addEventListener('pointerup',e=>{if(!touch)return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y;if(Math.abs(dx)>Math.abs(dy))setDir({x:Math.sign(dx),y:0});else setDir({x:0,y:Math.sign(dy)});touch=null;});
+    draw();gameTimer=setInterval(step,145);
+    canvas._cloakCleanup=()=>document.removeEventListener('keydown',key);
+  }
+  function stopSnake(){
+    if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
+    const canvas=$('#cloakSnakeCanvas');canvas?._cloakCleanup?.();
+  }
+  if(panel&&!$('#cloakGame')) {
+    const game=document.createElement('section');game.className='cloak-game';game.id='cloakGame';
+    game.innerHTML='<div class="cloak-game-heading"><strong>Snake</strong><span class="cloak-game-score" id="cloakSnakeScore">SCORE 0</span></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Snake game"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>use arrow keys, WASD, or swipe</span></div><div class="cloak-game-pad" id="cloakGamePad"><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:-1}" aria-label="Up">↑</button><button type="button" data-dir="{&quot;x&quot;:-1,&quot;y&quot;:0}" aria-label="Left">←</button><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:1}" aria-label="Down">↓</button><button type="button" data-dir="{&quot;x&quot;:1,&quot;y&quot;:0}" aria-label="Right">→</button></div>';
+    const form=$('#authForm',panel);form?.parentNode.insertBefore(game,form);
+  }
+  setLockedAppearance();
+  const authObserver=new MutationObserver(resetTimer);
+  authObserver.observe(document.body,{attributes:true,attributeFilter:['class']});
+  resetTimer();
+})();
