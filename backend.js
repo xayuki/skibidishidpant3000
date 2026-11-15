@@ -451,6 +451,17 @@
     return conversationId;
   }
 
+  function renderDesktopAttachments(attachments) {
+    const media=(attachments||[]).filter(a=>/^image\//i.test(a.mime_type||'')||/^video\//i.test(a.mime_type||''));
+    const other=(attachments||[]).filter(a=>!media.includes(a));
+    const previews=media.map(a=>{
+      const video=/^video\//i.test(a.mime_type||'');
+      const attrs='data-media-viewer="'+escapeHtml(a.url||'#')+'" data-media-download="'+escapeHtml(a.downloadUrl||a.url||'#')+'" data-media-name="'+escapeHtml(a.name||'Media')+'" data-media-type="'+(video?'video':'image')+'"';
+      return video ? '<button type="button" class="chat-media-preview chat-video-preview" '+attrs+' aria-label="Open video"><video src="'+escapeHtml(a.url||'#')+'" muted playsinline preload="metadata"></video><span class="chat-video-play"><i class="fa-solid fa-play"></i></span></button>' : '<button type="button" class="chat-media-preview" '+attrs+' aria-label="View image"><img src="'+escapeHtml(a.url||'#')+'" alt="'+escapeHtml(a.name||'')+'" loading="lazy"></button>';
+    }).join('');
+    return (media.length?'<div class="chat-media-grid count-'+Math.min(media.length,4)+'">'+previews+'</div>':'')+other.map(a=>'<a class="chat-attachment" href="'+escapeHtml(a.url||'#')+'" target="_blank" rel="noopener">'+escapeHtml(a.name||'Attachment')+'</a>').join('');
+  }
+
   function renderDesktopChat(peer) {
     const host=$('.rightside-area .bottom');
     if(!host||!peer)return;
@@ -469,7 +480,7 @@
             ${m.replyText?'<div class="desktop-reply-quote">'+escapeHtml(m.replyText.slice(0,140))+'</div>':''}
             <div class="desktop-message-meta"><strong>${m.author==='me'?'You':escapeHtml(peer.name)}</strong><time>${escapeHtml(m.time||'Now')}</time></div>
             ${m.text?'<p>'+escapeHtml(m.text)+'</p>':''}
-            ${(m.attachments||[]).map(a=>'<a class="chat-attachment" href="'+escapeHtml(a.url||'#')+'" target="_blank" rel="noopener">'+escapeHtml(a.name||'Attachment')+'</a>').join('')}
+            ${renderDesktopAttachments(m.attachments||[])}
             ${(m.reactions||[]).length?'<div class="message-reactions">'+m.reactions.map(r=>'<button data-desktop-react="'+m.id+'" data-emoji="'+escapeHtml(r.emoji)+'">'+escapeHtml(r.emoji)+'</button>').join('')+'</div>':''}
             <div class="desktop-message-actions"><button data-desktop-reply="${m.id}">Reply</button><button data-desktop-react="${m.id}" data-emoji="👍">👍</button><button data-desktop-react="${m.id}" data-emoji="❤️">❤️</button><button data-desktop-react="${m.id}" data-emoji="😂">😂</button></div>
           </article>`).join('')}
@@ -552,8 +563,9 @@
       const parent=m.reply_to?byId.get(m.reply_to):null;
       const attachments=[];
       for(const file of (m.attachments||[])){
-        const {data:signed}=await client.storage.from('chat-attachments').createSignedUrl(file.path,3600);
-        attachments.push({...file,url:signed?.signedUrl||'#'});
+        const storage=client.storage.from('chat-attachments');
+        const [{data:signed},{data:download}] = await Promise.all([storage.createSignedUrl(file.path,3600),storage.createSignedUrl(file.path,3600,{download:file.name||true})]);
+        attachments.push({...file,url:signed?.signedUrl||'#',downloadUrl:download?.signedUrl||signed?.signedUrl||'#'});
       }
       result.push({
         id:m.id,author:m.author_id===authUser.id?'me':'them',
@@ -881,7 +893,7 @@
   function pickAttachment() {
     const input=document.createElement('input');
     input.type='file';
-    input.accept='image/png,image/jpeg,image/webp,image/gif,application/pdf,text/plain';
+    input.accept='image/*,video/mp4,video/webm,video/quicktime,application/pdf,text/plain';
     input.onchange=async()=>{
       const file=input.files?.[0];
       if(!file)return;
