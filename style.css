@@ -2074,3 +2074,8 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 
 /* Keep consecutive messages on the same vertical rhythm as the first message. */
 .chat-message.grouped{padding-top:4px!important;padding-bottom:4px!important}
+
+
+/* Restore compact Discord-like message rhythm; grouped messages should not inherit first-row padding. */
+.chat-message{padding-top:2px!important;padding-bottom:2px!important}
+.chat-message.grouped{padding-top:0!important;padding-bottom:0!important}
