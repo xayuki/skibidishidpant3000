@@ -104,6 +104,7 @@
     toggleReaction,
     setReplyTarget,
     openNotification,
+    saveTheme,
     pickAttachment
   };
 
@@ -178,6 +179,7 @@
     const online = extra.online ?? row.presence === 'online';
     return {
       id: row.id,
+      created_at: row.created_at,
       handle: row.handle,
       name: row.display_name,
       image: profileImage(row),
@@ -328,6 +330,7 @@
 
     currentPeers = new Map(personList.map(p=>[p.id,p]));
     window.XaynetApp.setProfile(toPerson(profile,{online:true}));
+    if(profile.theme)window.XaynetApp.setThemeSettings(profile.theme);
     window.XaynetApp.setPeople(personList);
     window.XaynetApp.setChats(chats);
     window.XaynetApp.setNotifications(notifications);
@@ -549,9 +552,8 @@
   }
 
   async function updateProfile(changes) {
-    const handle=normalizeHandle(changes.handle);
+    const handle=profile.handle;
     const displayName=String(changes.display_name||'').trim();
-    if(!validHandle(handle))throw new Error('Handle must be 3–24 lowercase letters, numbers, periods, or underscores.');
     if(!displayName || displayName.length>40)throw new Error('Display name must be 1–40 characters.');
     const {data,error}=await client.from('profiles').update({
       handle,display_name:displayName,bio:String(changes.bio||'').slice(0,190),updated_at:new Date().toISOString()
@@ -582,6 +584,12 @@
     }
   }
 
+  async function saveTheme(theme) {
+    if(!authUser || !theme)return;
+    const {error}=await client.from('profiles').update({theme}).eq('id',authUser.id);
+    if(error)throw error;
+  }
+
   async function subscribeInbox() {
     if(inboxChannel)await client.removeChannel(inboxChannel);
     inboxChannel=client.channel('inbox:'+authUser.id,{config:{private:true}})
@@ -597,7 +605,7 @@
     presenceChannel
       .on('presence',{event:'sync'},()=>{
         const state=presenceChannel.presenceState();
-        presencePeers=new Set(Object.keys(state).filter(id=>id!==authUser.id));
+        presencePeers=new Set(Object.entries(state).filter(([id,entries])=>id!==authUser.id && (entries||[]).some(entry=>entry.presence==='online')).map(([id])=>id));
         const people=window.XaynetApp.people;
         people.forEach(p=>{p.online=presencePeers.has(p.id);if(p.online)p.status=p.status||'Online';});
         window.XaynetApp.render();
