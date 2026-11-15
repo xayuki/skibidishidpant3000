@@ -361,6 +361,8 @@
   });
   const closeMessageMenus=(except=null)=>{
     $('#mobileChatMessages .chat-message.actions-open').forEach(row=>{if(row!==except)row.classList.remove('actions-open');});
+    const focused=document.activeElement;
+    if(focused?.closest?.('.message-actions'))focused.blur();
   };
   $('#mobileChatMessages').addEventListener('click',async e=>{
     const reply=e.target.closest('[data-reply-message]');
