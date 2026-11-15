@@ -108,6 +108,7 @@
     startDm,
     sendMessage,
     toggleReaction,
+    updateMessage,
     deleteMessage,
     setReplyTarget,
     openNotification,
@@ -310,6 +311,7 @@
           created_at:m.created_at,
           reply_to:m.reply_to,
           replyText:parent?.content||'',
+          edited_at:m.edited_at,
           attachments:(m.attachments||[]).map(a=>({...a})),
           reactions:reactionByMessage.get(m.id)||[]
         };
@@ -543,7 +545,7 @@
       result.push({
         id:m.id,author:m.author_id===authUser.id?'me':'them',
         text:m.content,time:new Date(m.created_at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),
-        created_at:m.created_at,reply_to:m.reply_to,replyText:parent?.content||'',
+        created_at:m.created_at,reply_to:m.reply_to,replyText:parent?.content||'',edited_at:m.edited_at,
         attachments,reactions:reactions.get(m.id)||[]
       });
     }
@@ -638,6 +640,21 @@
       const peer=currentPeers.get(peerId)||window.XaynetApp.people.find(p=>p.id===peerId);
       if(peer?.conversationId)await loadConversation(peerId,peer.conversationId);
     }
+  }
+
+  async function updateMessage(messageId, content) {
+    if(!authUser || !messageId) throw new Error('You need to sign in first.');
+    const clean=String(content||'').trim();
+    if(!clean)throw new Error('A message cannot be empty.');
+    if(clean.length>4000)throw new Error('Messages must be 4,000 characters or fewer.');
+    const {error}=await client.from('messages')
+      .update({content:clean,edited_at:new Date().toISOString()})
+      .eq('id',messageId).eq('author_id',authUser.id).is('deleted_at',null)
+      .select('id').single();
+    if(error)throw error;
+    const peerId=window.XaynetApp.currentPeerId||activeDesktopPeerId;
+    const peer=currentPeers.get(peerId)||window.XaynetApp.people.find(p=>p.id===peerId);
+    if(peer?.conversationId)await loadConversation(peerId,peer.conversationId);
   }
 
   async function deleteMessage(messageId) {
