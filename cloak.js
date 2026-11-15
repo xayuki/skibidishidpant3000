@@ -263,7 +263,7 @@
   }
   if(panel&&!$('#cloakGame')) {
     const game=document.createElement('section');game.className='cloak-game';game.id='cloakGame';
-    game.innerHTML='<div class="cloak-game-heading"><strong>Territory</strong><div class="cloak-game-heading-right"><span class="cloak-game-score" id="cloakSnakeScore">SCORE 0</span><button type="button" class="cloak-unlock-toggle" id="cloakUnlockToggle">Log in</button></div></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Territory arena"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>drag anywhere to steer</span></div>';
+    game.innerHTML='<div class="cloak-game-heading"><strong>Territory</strong><div class="cloak-game-heading-right"><span class="cloak-game-score" id="cloakSnakeScore">AREA 0</span><button type="button" class="cloak-unlock-toggle" id="cloakUnlockToggle">Log in</button></div></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Territory arena"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>drag anywhere to steer</span></div>';
     gate?.appendChild(game);
     const unlock=$('#cloakUnlockToggle');
     unlock?.addEventListener('click',()=>{
