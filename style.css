@@ -1347,3 +1347,10 @@ aside .icon i { background-color: #111; }
   .mobile-app[data-theme="light"] .profile-friend-stack img{border-color:#fff}
   .mobile-app[data-theme="light"] .profile-actions button:last-child{background:#f2f3f5;color:#232428;border-color:#dfe1e5}
 }
+
+@media (max-width:750px) {
+  .mobile-tab-avatar{position:relative;display:block;width:23px;height:23px;flex:none}
+  .mobile-tab-avatar img{display:block;width:23px;height:23px;object-fit:cover;border-radius:50%}
+  .mobile-tab-avatar i{width:8px;height:8px;right:-1px;bottom:-1px;border:2px solid #080808}
+  .mobile-app[data-theme="light"] .mobile-tab-avatar i{border-color:#fff}
+}
