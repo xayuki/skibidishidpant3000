@@ -106,16 +106,43 @@
     $('#sendFriendRequest').onclick=()=>{$('#friendFeedback').textContent=$('#friendUsername').value.trim()?'Friend request queued in this demo.':'Enter a username first.';};
   };
   const renderActivity = () => { setHeader('Activity','Your notifications'); $('#mobileContent').innerHTML='<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>'; };
-  const renderYou = () => { if(youView==='appearance'){renderAppearance();return;} setHeader('You','Your account'); $('#mobileContent').innerHTML=`
-    <div class="mobile-user-card"><span class="mobile-avatar-wrap account-avatar"><img src="${avatar}" alt=""><i class="online"></i></span><div><strong>Anonymou5</strong><span>@anonymou5 · Online</span></div><button id="editProfile"><i class="fa-solid fa-pen"></i></button></div>
-    <div class="mobile-settings-group"><button data-setting="Set Status"><i class="fa-regular fa-face-smile"></i><span>Set Status</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="My Account"><i class="fa-regular fa-user"></i><span>My Account</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Appearance"><i class="fa-solid fa-palette"></i><span>Appearance</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Notifications"><i class="fa-regular fa-bell"></i><span>Notifications</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Privacy & Safety"><i class="fa-solid fa-shield-halved"></i><span>Privacy & Safety</span><i class="fa-solid fa-chevron-right"></i></button></div>
-    <button class="mobile-logout" id="logoutDemo">Log Out</button>`;
-    $('#editProfile').onclick=()=>{openModal('Edit Profile','<p class="modal-description">Profile editing is a local mockup.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><button class="modal-primary" id="saveProfile">Save Changes</button>');$('#saveProfile').onclick=()=>{const name=$('#profileNameInput').value.trim();if(name){$('.mobile-user-card strong').textContent=name;closeModal();}};};
-    $('[data-setting]').forEach(b=>b.onclick=()=>{
-      if(b.dataset.setting==='Appearance'){youView='appearance';renderAppearance();return;}
-      openModal(b.dataset.setting,`<p class="modal-description">${b.dataset.setting} settings are represented in this interactive mockup.</p><button class="modal-primary" id="doneSetting">Done</button>`);
+  const renderYou = () => {
+    if(youView==='appearance'){renderAppearance();return;}
+    setHeader('Profile','Your account');
+    $('#mobileContent').innerHTML = [
+      '<section class="mobile-profile-page">',
+        '<div class="profile-utility-row"><span class="profile-presence-label"><i></i> ONLINE NOW</span><div class="profile-quick-actions"><span class="profile-quick-pill">MY PROFILE</span><button id="profileMore" aria-label="More profile options"><i class="fa-solid fa-ellipsis"></i></button></div></div>',
+        '<section class="profile-hero-card">',
+          '<div class="profile-banner"><span class="profile-banner-mark">X</span></div>',
+          '<div class="profile-hero-content">',
+            '<span class="mobile-avatar-wrap profile-large-avatar"><img src="'+avatar+'" alt="Anonymou5"><i class="online"></i></span>',
+            '<button class="profile-hero-more" id="profileHeroMore" aria-label="Profile options"><i class="fa-solid fa-ellipsis"></i></button>',
+            '<div class="profile-identity"><strong>Anonymou5</strong><span>@anonymou5</span></div>',
+            '<div class="profile-actions"><button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button><button id="editProfile"><i class="fa-solid fa-pen"></i> Edit Profile</button></div>',
+          '</div>',
+        '</section>',
+        '<section class="profile-info-card"><div class="profile-card-heading">MEMBER SINCE</div><div class="profile-member-date"><i class="fa-regular fa-calendar"></i><span>September 18, 2026</span></div></section>',
+        '<section class="profile-info-card"><div class="profile-card-heading">CONNECTIONS</div><div class="profile-connection"><span class="profile-connection-icon"><i class="fa-brands fa-discord"></i></span><div><strong>Discord</strong><span>@anonymou5 ····</span></div><i class="fa-solid fa-circle-check profile-verified"></i></div></section>',
+        '<button class="profile-info-card profile-friends-card" id="profileFriends"><span class="profile-card-heading">FRIENDS <small>5</small></span><span class="profile-friends-row">',
+          '<span class="profile-friend-stack"><img src="./Assets/img-icon 4.jpeg" alt=""><img src="./Assets/img-icon 3.png" alt=""><img src="./Assets/img-icon 2.png" alt=""><img src="./Assets/img-icon 1.png" alt=""><img src="./Assets/img-icon.png" alt=""></span>',
+          '<i class="fa-solid fa-chevron-right"></i></span></button>',
+      '</section>'
+    ].join('');
+    const edit = () => {
+      openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><label class="modal-label">Username</label><input class="modal-input" value="@anonymou5" disabled><button class="modal-primary" id="saveProfile">Save Changes</button>');
+      $('#saveProfile').onclick=()=>{const name=$('#profileNameInput').value.trim();if(name){$('.profile-identity strong').textContent=name;closeModal();}};
+    };
+    $('#editProfile').onclick=edit;
+    $('#profileMessage').onclick=()=>{tab='messages';render();};
+    $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+people.map(p=>'<button data-friend-chat="'+p.id+'"><img src="'+p.image+'" alt=""><span>'+esc(p.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
+    $('#profileMore').onclick=()=>openModal('Profile options','<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button>');
+    $('#profileHeroMore').onclick=()=>$('#profileMore').click();
+    $('#mobileModal').addEventListener('click',e=>{
+      if(e.target.id==='profileEditOption'){closeModal();edit();}
+      if(e.target.id==='profileAppearanceOption'){closeModal();youView='appearance';renderAppearance();}
+      const friend=e.target.closest('[data-friend-chat]');
+      if(friend){const id=friend.dataset.friendChat;closeModal();tab='messages';render();openChat(id);}
     });
-    $('#logoutDemo').onclick=()=>openModal('Log Out','<p class="modal-description">This is a mockup. No account is connected.</p><button class="modal-primary" id="doneSetting">Got it</button>');
   };
 
   const renderAppearance = () => {
