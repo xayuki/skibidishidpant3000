@@ -176,9 +176,10 @@
   }
 
   function profileImage(row) {
-    if (!row?.avatar_path) return null;
+    const emptyAvatar = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+    if (!row?.avatar_path) return emptyAvatar;
     const { data } = client.storage.from('profile-media').getPublicUrl(row.avatar_path);
-    return data?.publicUrl || null;
+    return data?.publicUrl || emptyAvatar;
   }
   function profileBanner(row) {
     if (!row?.banner_path) return null;
