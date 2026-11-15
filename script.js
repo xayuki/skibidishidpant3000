@@ -88,7 +88,7 @@
     const other=(attachments||[]).filter(a=>!media.includes(a));
     const previews=media.map(a=>{
       const video=/^video\//i.test(a.mime_type||'');
-      const attrs='data-media-viewer="'+esc(a.url||'#')+'" data-media-download="'+esc(a.downloadUrl||a.url||'#')+'" data-media-name="'+esc(a.name||'Media')+'" data-media-type="'+(video?'video':'image')+'"';
+      const attrs='data-media-viewer="'+esc(a.url||'#')+'" data-media-download="'+esc(a.downloadUrl||a.url||'#')+'" data-media-name="'+esc(a.name||'Media')+'" data-media-type="'+(video?'video':'image')+'" data-media-path="'+esc(a.path||'')+'"';
       return video ? '<button type="button" class="chat-media-preview chat-video-preview" '+attrs+' aria-label="Open video"><video src="'+esc(a.url||'#')+'" muted playsinline preload="metadata"></video><span class="chat-video-play"><i class="fa-solid fa-play"></i></span></button>' : '<button type="button" class="chat-media-preview" '+attrs+' aria-label="View image"><img src="'+esc(a.url||'#')+'" alt="'+esc(a.name||'')+'" loading="lazy"></button>';
     }).join('');
     return (media.length?'<div class="chat-media-grid count-'+Math.min(media.length,4)+'">'+previews+'</div>':'')+other.map(a=>'<a class="chat-attachment" href="'+esc(a.url||'#')+'" target="_blank" rel="noopener">'+esc(a.name||'Attachment')+'</a>').join('');
@@ -108,6 +108,7 @@
     document.addEventListener('keydown',onKey);document.body.appendChild(overlay);
   };
   document.addEventListener('click',event=>{const trigger=event.target.closest('[data-media-viewer]');if(!trigger)return;event.preventDefault();openMediaViewer({url:trigger.dataset.mediaViewer,downloadUrl:trigger.dataset.mediaDownload,name:trigger.dataset.mediaName,type:trigger.dataset.mediaType});});
+  document.addEventListener('error',async event=>{const image=event.target;if(!(image instanceof HTMLImageElement)||!image.matches('.chat-media-preview img')||image.dataset.mediaRetried==='1')return;const preview=image.closest('[data-media-path]');const path=preview?.dataset.mediaPath;if(!path||!window.XaynetBackend?.refreshAttachmentUrl)return;image.dataset.mediaRetried='1';try{const fresh=await window.XaynetBackend.refreshAttachmentUrl(path);if(fresh?.url){image.src=fresh.url;preview.dataset.mediaViewer=fresh.url;preview.dataset.mediaDownload=fresh.downloadUrl||fresh.url;}}catch(error){console.warn('[Xaynet] Attachment image refresh failed:',error);}},true);
   const openModal = (title,body) => {
     const backdrop=$('#mobileModalBackdrop'), modal=$('#mobileModal');
     modal.innerHTML=`<div class="mobile-modal-grab-area"><span class="mobile-modal-grab"></span></div><div class="mobile-modal-content"><div class="mobile-modal-head"><strong>${title}</strong><button id="closeMobileModal" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>${body}</div>`;
