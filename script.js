@@ -125,6 +125,8 @@
   const closeProfileSheet = () => { const sheet=$('.mobile-profile-sheet-backdrop'); if(sheet)sheet.remove(); };
   const renderMessages = () => {
     setHeader('Messages','Your conversations');
+    const topAction=$('#mobileNew');
+    if(topAction){topAction.hidden=false;topAction.setAttribute('aria-label','New message');topAction.title='New message';topAction.innerHTML='<i class="fa-solid fa-pen-to-square"></i>';topAction.onclick=showNewMessage;}
     const rows=people.filter(p=>p.hasConversation && p.name.toLowerCase().includes(search.toLowerCase()));
     $('#mobileContent').innerHTML=`
       <div class="mobile-search"><i class="fa-solid fa-magnifying-glass"></i><input id="mobileSearch" placeholder="Find a conversation" value="${esc(search)}"></div>
@@ -170,6 +172,8 @@
   const renderActivity = () => {
     setHeader('Activity','Your notifications');
     const rows=notificationItems;
+    const topAction=$('#mobileNew');
+    if(topAction){topAction.hidden=!rows.length;topAction.setAttribute('aria-label','Clear activity');topAction.title='Clear activity';topAction.innerHTML='<i class="fa-solid fa-trash-can"></i>';topAction.onclick=async()=>{if(!notificationItems.length)return;topAction.disabled=true;try{await window.XaynetBackend.clearActivity();}catch(error){openModal('Could not clear activity','<p class="modal-description">'+esc(error.message||'Try again.')+'</p>');}finally{topAction.disabled=false;}};}
     $('#mobileContent').innerHTML=rows.length?`
       <div class="mobile-section-label"><span>RECENT</span></div>
       <div class="mobile-dm-list">${rows.map(n=>`<button class="mobile-dm-row notification-row" data-notification-id="${n.id}">
