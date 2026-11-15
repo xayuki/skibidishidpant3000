@@ -240,9 +240,19 @@
       const left=camera.x-vw/2,top=camera.y-vh/2;
       regions.forEach(region=>{
         const pts=region.points;if(pts.length<3)return;
-        ctx.beginPath();pts.forEach((p,i)=>{const x=p.x-left,y=p.y-top;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();
-        ctx.fillStyle=region.id===0?'#34383e':colors[region.id]+'42';ctx.fill();
-        // No per-capture outlines: territory reads as one continuous filled region.
+        // Smooth each captured outline with quadratic joins; overlapping captures blend into one field.
+        const screen=pts.map(p=>({x:p.x-left,y:p.y-top}));
+        ctx.beginPath();
+        const mid=(p,q)=>({x:(p.x+q.x)/2,y:(p.y+q.y)/2});
+        const first=mid(screen[screen.length-1],screen[0]);
+        ctx.moveTo(first.x,first.y);
+        for(let i=0;i<screen.length;i++){
+          const p=screen[i],next=screen[(i+1)%screen.length],m=mid(p,next);
+          ctx.quadraticCurveTo(p.x,p.y,m.x,m.y);
+        }
+        ctx.closePath();
+        ctx.fillStyle=region.id===0?'#34383e':colors[region.id]+'42';
+        ctx.fill();
       });
       ctx.strokeStyle='#25282d';ctx.lineWidth=5;ctx.strokeRect(-left,-top,W,H);
 
