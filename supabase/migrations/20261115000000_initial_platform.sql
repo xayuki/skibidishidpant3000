@@ -130,7 +130,7 @@ returns boolean
 language sql stable security definer
 set search_path = ''
 as $$
-  select exists (
+  select p_user = auth.uid() and exists (
     select 1 from public.dm_members m
     where m.conversation_id = p_conversation and m.user_id = p_user
   );
@@ -143,7 +143,7 @@ returns boolean
 language sql stable security definer
 set search_path = ''
 as $$
-  select exists (
+  select auth.uid() in (p_user_a, p_user_b) and exists (
     select 1 from public.friendships f
     where (f.user_a = least(p_user_a,p_user_b) and f.user_b = greatest(p_user_a,p_user_b))
   );
@@ -420,20 +420,22 @@ create policy "dm members receive typing broadcasts"
   on realtime.messages for select to authenticated
   using (
     realtime.topic() like 'dm:%'
+    and realtime.messages.extension = 'broadcast'
     and private.is_dm_member(split_part(realtime.topic(), ':', 2)::uuid, (select auth.uid()))
   );
 create policy "dm members send typing broadcasts"
   on realtime.messages for insert to authenticated
   with check (
     realtime.topic() like 'dm:%'
+    and realtime.messages.extension = 'broadcast'
     and private.is_dm_member(split_part(realtime.topic(), ':', 2)::uuid, (select auth.uid()))
   );
 create policy "signed in users read global presence"
   on realtime.messages for select to authenticated
-  using (realtime.topic() = 'presence:global');
+  using (realtime.topic() = 'presence:global' and realtime.messages.extension = 'presence');
 create policy "signed in users publish global presence"
   on realtime.messages for insert to authenticated
-  with check (realtime.topic() = 'presence:global');
+  with check (realtime.topic() = 'presence:global' and realtime.messages.extension = 'presence');
 
 -- Enable database change feeds for the UI's durable data.
 do $$
@@ -554,7 +556,7 @@ returns boolean
 language sql stable security definer
 set search_path = ''
 as $$
-  select exists (
+  select p_user_a = auth.uid() and exists (
     select 1 from public.blocked_users b
     where (b.blocker_id=p_user_a and b.blocked_id=p_user_b)
        or (b.blocker_id=p_user_b and b.blocked_id=p_user_a)
