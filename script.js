@@ -124,6 +124,7 @@
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
     $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
     $('#profileHeroMore').onclick=()=>$('#profileMore').click();
+    if(!self)$('#profileBack').onclick=()=>{if(current){$('#mobileChatScreen').classList.add('open');$('#mobileChatScreen').setAttribute('aria-hidden','false');$('#mobileTabbar').classList.add('hidden');}else{tab=profileReturnTab;render();}};
   };
   const renderAppearance = () => {
     setHeader('Appearance','Make the app look the way you want');
