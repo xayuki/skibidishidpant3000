@@ -8,7 +8,7 @@
   root.id='xayCallDock';root.className='xay-call-dock';root.hidden=true;
   root.innerHTML=`
     <header class="xay-call-head"><div><strong id="xayCallTitle">Call</strong><span id="xayCallStatus">Connecting…</span></div><button id="xayCallMin" type="button" aria-label="Minimize call">—</button></header>
-    <div class="xay-call-video" id="xayCallVideo"><video id="xayRemoteVideo" autoplay playsinline></video><video id="xayLocalVideo" autoplay muted playsinline></video></div>
+    <audio id="xayRemoteAudio" autoplay></audio><div class="xay-call-video" id="xayCallVideo"><video id="xayRemoteVideo" autoplay playsinline></video><video id="xayLocalVideo" autoplay muted playsinline></video></div>
     <div class="xay-call-incoming" id="xayCallIncoming" hidden><p id="xayIncomingText">Incoming call</p><div><button id="xayAccept" type="button">Answer</button><button id="xayDecline" type="button">Decline</button></div></div>
     <div class="xay-call-controls" id="xayCallControls"><button id="xayMic" type="button" aria-label="Mute microphone"><i class="fa-solid fa-microphone"></i></button><button id="xayCamera" type="button" aria-label="Turn camera off"><i class="fa-solid fa-video"></i></button><button id="xayHangup" type="button" aria-label="End call"><i class="fa-solid fa-phone-slash"></i></button></div>
   `;
@@ -36,7 +36,7 @@
     call.pc=pc;
     pc.ontrack=e=>{
       const stream=e.streams?.[0];
-      if(stream){$('#xayRemoteVideo').srcObject=stream;$('#xayCallVideo').classList.toggle('has-remote-video',stream.getVideoTracks().length>0);}
+      if(stream){$('#xayRemoteAudio').srcObject=stream;$('#xayRemoteVideo').srcObject=stream;$('#xayCallVideo').classList.toggle('has-remote-video',stream.getVideoTracks().length>0);}
     };
     pc.onicecandidate=e=>{
       if(!e.candidate)return;
@@ -74,7 +74,7 @@
       try{old.stream?.getTracks().forEach(t=>t.stop());}catch{}
       try{old.pc?.close();}catch{}
     }
-    $('#xayRemoteVideo').srcObject=null;$('#xayLocalVideo').srcObject=null;
+    $('#xayRemoteVideo').srcObject=null;$('#xayRemoteAudio').srcObject=null;$('#xayLocalVideo').srcObject=null;
     root.hidden=true;root.classList.remove('minimized','audio-only');
     $('#xayCallIncoming').hidden=true;$('#xayCallControls').hidden=false;
     $('#xayMic').classList.remove('is-off');$('#xayCamera').classList.remove('is-off');
@@ -85,7 +85,7 @@
     const data=row.payload||{};
     try{
       if(row.kind==='offer'){
-        if(call){await window.XaynetBackend.client.from('call_signals').insert({call_id:row.call_id,conversation_id:row.conversation_id,sender_id:userId,recipient_id:row.sender_id,kind:'busy',payload:{}}).catch(()=>{});return;}
+        if(call){try{await window.XaynetBackend.client.from('call_signals').insert({call_id:row.call_id,conversation_id:row.conversation_id,sender_id:userId,recipient_id:row.sender_id,kind:'busy',payload:{}});}catch{}return;}
         pendingOffer=row;
         const peer=window.XaynetApp?.people?.find(p=>p.id===row.sender_id);
         show(peer?.name||'Incoming call',data.mode||'audio');
@@ -150,7 +150,7 @@
     userId=id;
     channel=client.channel('call-signals:'+id)
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_signals',filter:'recipient_id=eq.'+id},payload=>handleSignal(payload.new))
-      .subscribe();
+      .subscribe(async status=>{if(status==='SUBSCRIBED'){const {data}=await client.from('call_signals').select('*').eq('recipient_id',id).gte('created_at',new Date(Date.now()-120000).toISOString()).order('created_at');for(const row of data||[])handleSignal(row);}});
   };
   $('#mobileCall')?.addEventListener('click',()=>{const peerId=window.XaynetApp?.currentPeerId;if(peerId)start(peerId,'audio').catch(error=>window.XaynetApp?.openModal('Could not start call','<p class="modal-description">'+esc(error.message||'Check microphone permissions and try again.')+'</p>'));});
   $('#mobileVideoCall')?.addEventListener('click',()=>{const peerId=window.XaynetApp?.currentPeerId;if(peerId)start(peerId,'video').catch(error=>window.XaynetApp?.openModal('Could not start video call','<p class="modal-description">'+esc(error.message||'Check camera and microphone permissions and try again.')+'</p>'));});
