@@ -196,7 +196,7 @@
     };
     else $('#profileAddFriend').onclick=async()=>{try{await window.XaynetBackend.sendFriendRequest(p.handle);closeProfileSheet();}catch(err){openModal('Friend request','<p class="modal-description">'+esc(err.message||'Could not send request.')+'</p><button class="modal-primary" id="doneSetting">Okay</button>');}};
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
-    $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button><button class="modal-list-action" id="profileSignOut">Sign Out</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
+    $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button><button class="modal-list-action" id="profileCloakSettings">Cloak Settings</button><button class="modal-list-action" id="profileSignOut">Sign Out</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
     if(!self)$('#profileBack').onclick=closeProfileSheet;
   };
   const renderAppearance = () => {
@@ -304,6 +304,7 @@
       updateBottomNotificationDots();
       if(tab==='notifications')renderActivity();
     },
+    closeChat,
     get currentPeerId() { return current; },
     get currentPerson() { return person(current); },
     setTab(name) { tab=name; render(); },
@@ -422,6 +423,7 @@
     const friend=e.target.closest('[data-friend-chat]');if(friend){const id=friend.dataset.friendChat;closeModal();tab='messages';render();openChat(id);return;}
     if(e.target.id==='profileEditOption'){closeModal();$('#editProfile')?.click();return;}
     if(e.target.id==='profileAppearanceOption'){closeModal();youView='appearance';renderAppearance();return;}
+    if(e.target.id==='profileCloakSettings'){closeModal();window.XaynetCloak?.openSettings();return;}
     if(e.target.id==='profileSignOut'){closeModal();window.XaynetBackend.signOut();return;}
     if(e.target.id==='profileMessageOption'){closeModal();const id=$('.mobile-profile-page')?.dataset.profileId;if(id&&id!=='me')openChat(id);return;}
     if(e.target.id==='profileBackOption'){closeModal();tab=profileReturnTab;render();return;}
