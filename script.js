@@ -68,14 +68,14 @@
           ${grouped?'<span class="chat-message-gutter-time">'+esc(m.time||'')+'</span>':`<img src="${authorImage}" alt=""> `}
           <div class="chat-message-body">
             ${m.replyText?`<div class="chat-reply-quote">${esc(m.replyText.slice(0,150))}</div>`:''}
-            ${grouped?'':`<div class="chat-message-meta"><strong>${esc(authorName)}</strong><time>${esc(m.time||'Now')}${m.edited_at?' · edited':''}</time></div>`}
-            ${m.text?`<p>${esc(m.text)}</p>`:''}
+            ${grouped?'':`<div class="chat-message-meta"><strong>${esc(authorName)}</strong><time>${esc(m.time||'Now')}</time></div>`}
+            ${m.text?`<p>${esc(m.text)}${m.edited_at?' <small class="message-edited-label">(edited)</small>':''}</p>`:''}
             ${(m.attachments||[]).map(a=>`<a class="chat-attachment" href="${esc(a.url||'#')}" target="_blank" rel="noopener">${esc(a.name||'Attachment')}</a>`).join('')}
             ${(m.reactions||[]).length?`<div class="message-reactions">${m.reactions.map(r=>`<button data-react-message="${m.id}" data-emoji="${esc(r.emoji)}" class="${r.mine?'mine-reaction':''}">${esc(r.emoji)}</button>`).join('')}</div>`:''}
-            <div class="message-actions">
-              <button data-open-reaction="${m.id}" type="button" aria-label="Add reaction">☺</button>
-              <button data-reply-message="${m.id}" type="button">Reply</button>
-              ${m.author==='me'?'<button data-delete-message="'+m.id+'" type="button">Delete</button>':''}
+            <div class="message-actions" role="toolbar" aria-label="Message actions">
+              <button data-open-reaction="${m.id}" type="button" aria-label="Add reaction" title="Add reaction"><i class="fa-regular fa-face-smile"></i><span class="reaction-add-mark">+</span></button>
+              <button data-reply-message="${m.id}" type="button" aria-label="Reply" title="Reply"><i class="fa-solid fa-reply"></i></button>
+              ${m.author==='me'?'<button data-edit-message="'+m.id+'" type="button" aria-label="Edit message" title="Edit message"><i class="fa-solid fa-pen"></i></button><button data-delete-message="'+m.id+'" type="button" aria-label="Delete message" title="Delete message"><i class="fa-regular fa-trash-can"></i></button>':''}
             </div>
           </div>
         </article>`;
@@ -359,18 +359,56 @@
     const notice=e.target.closest('[data-notification-id]');
     if(notice) window.XaynetBackend.openNotification(notice.dataset.notificationId);
   });
+  const closeMessageMenus=(except=null)=>{
+    $('#mobileChatMessages .chat-message.actions-open').forEach(row=>{if(row!==except)row.classList.remove('actions-open');});
+  };
   $('#mobileChatMessages').addEventListener('click',async e=>{
     const reply=e.target.closest('[data-reply-message]');
     const react=e.target.closest('[data-react-message]');
     const picker=e.target.closest('[data-open-reaction]');
+    const edit=e.target.closest('[data-edit-message]');
     const remove=e.target.closest('[data-delete-message]');
-    if(reply){window.XaynetBackend.setReplyTarget(reply.dataset.replyMessage);return;}
-    if(react){try{await window.XaynetBackend.toggleReaction(react.dataset.reactMessage,react.dataset.emoji);}catch(err){openModal('Reaction failed','<p class="modal-description">'+esc(err.message||'Could not add reaction.')+'</p>');}return;}
-    if(picker){openReactionPicker(picker.dataset.openReaction);return;}
-    if(remove){openModal('Delete Message','<p class="modal-description">Delete this message? This cannot be undone.</p><button class="modal-primary" id="confirmDeleteMessage">Delete Message</button>');$('#confirmDeleteMessage').onclick=async()=>{const button=$('#confirmDeleteMessage');button.disabled=true;button.textContent='Deleting…';try{await window.XaynetBackend.deleteMessage(remove.dataset.deleteMessage);closeModal();}catch(err){button.disabled=false;button.textContent='Delete Message';openModal('Could not delete message','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>');}};return;}
+    if(reply){closeMessageMenus();window.XaynetBackend.setReplyTarget(reply.dataset.replyMessage);return;}
+    if(react){closeMessageMenus();try{await window.XaynetBackend.toggleReaction(react.dataset.reactMessage,react.dataset.emoji);}catch(err){openModal('Reaction failed','<p class="modal-description">'+esc(err.message||'Could not add reaction.')+'</p>');}return;}
+    if(picker){closeMessageMenus();openReactionPicker(picker.dataset.openReaction);return;}
+    if(edit){
+      closeMessageMenus();
+      const message=(chats[current]||[]).find(item=>item.id===edit.dataset.editMessage);
+      if(!message||message.author!=='me')return;
+      openModal('Edit Message','<p class="modal-description">Make changes to your message.</p><textarea class="modal-input message-edit-input" id="editMessageText" rows="4" maxlength="4000">'+esc(message.text||'')+'</textarea><button class="modal-primary" id="saveEditedMessage">Save Changes</button><p class="modal-feedback" id="editMessageFeedback"></p>');
+      $('#saveEditedMessage').onclick=async()=>{
+        const button=$('#saveEditedMessage'),feedback=$('#editMessageFeedback'),value=$('#editMessageText').value.trim();
+        if(!value){feedback.textContent='A message cannot be empty.';return;}
+        button.disabled=true;button.textContent='Saving…';
+        try{await window.XaynetBackend.updateMessage(message.id,value);closeModal();}
+        catch(err){feedback.textContent=err.message||'Could not edit message.';button.disabled=false;button.textContent='Save Changes';}
+      };
+      return;
+    }
+    if(remove){
+      closeMessageMenus();
+      const messageId=remove.dataset.deleteMessage;
+      openModal('Delete Message','<p class="modal-description">Delete this message? This cannot be undone.</p><button class="modal-primary modal-danger" id="confirmDeleteMessage"><i class="fa-regular fa-trash-can"></i> Delete Message</button><button class="modal-list-action" id="cancelDeleteMessage">Cancel</button>');
+      $('#cancelDeleteMessage').onclick=closeModal;
+      $('#confirmDeleteMessage').onclick=async()=>{const button=$('#confirmDeleteMessage');button.disabled=true;button.textContent='Deleting…';try{await window.XaynetBackend.deleteMessage(messageId);closeModal();}catch(err){button.disabled=false;button.textContent='Delete Message';openModal('Could not delete message','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>');}};
+      return;
+    }
     const row=e.target.closest('.chat-message');
-    if(row && !e.target.closest('a,button'))row.classList.toggle('actions-open');
+    if(row && !e.target.closest('a,button')){
+      const wasOpen=row.classList.contains('actions-open');
+      closeMessageMenus();
+      if(!wasOpen)row.classList.add('actions-open');
+    }
   });
+  $('#mobileChatMessages').addEventListener('pointerout',e=>{
+    if(e.pointerType!=='mouse')return;
+    const row=e.target.closest('.chat-message');
+    if(row && !row.contains(e.relatedTarget))row.classList.remove('actions-open');
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#mobileChatMessages .chat-message'))closeMessageMenus();
+  });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMessageMenus();});
   const openReactionPicker = messageId => {
     const common=['👍','❤️','😂','🔥','😭','😍','👀','🎉','🙏','💀','🤔','😎','🥹','😮','😡','👏','💯','✨','🫡','🤝','🫶','🤣','😊','🙃','😴','🤯','🥳','😈','👎','❤️‍🔥','💔','⭐','🚀','🍿','🐈','🐸','🌙','☀️'];
     openModal('Add Reaction','<p class="modal-description">choose an emoji or enter any emoji supported by your device.</p><div class="emoji-picker-grid">'+common.map(emoji=>'<button type="button" data-picker-emoji="'+emoji+'">'+emoji+'</button>').join('')+'</div><label class="modal-label" for="customReactionEmoji">Any emoji</label><input class="modal-input" id="customReactionEmoji" placeholder="paste or type an emoji"><button class="modal-primary" id="sendCustomReaction">Add Reaction</button>');
