@@ -545,3 +545,41 @@ create policy "users update their own profile media"
 create policy "users delete their own profile media"
   on storage.objects for delete to authenticated
   using (bucket_id = 'profile-media' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- Private helper access for the RLS policies above.
+grant usage on schema private to authenticated;
+
+create or replace function private.is_blocked(p_user_a uuid, p_user_b uuid)
+returns boolean
+language sql stable security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1 from public.blocked_users b
+    where (b.blocker_id=p_user_a and b.blocked_id=p_user_b)
+       or (b.blocker_id=p_user_b and b.blocked_id=p_user_a)
+  );
+$$;
+revoke all on function private.is_blocked(uuid, uuid) from public, anon;
+grant execute on function private.is_blocked(uuid, uuid) to authenticated;
+
+drop policy if exists "users send friend requests" on public.friend_requests;
+create policy "users send friend requests"
+  on public.friend_requests for insert to authenticated
+  with check (
+    sender_id = (select auth.uid())
+    and state = 'pending'
+    and not private.is_blocked((select auth.uid()), receiver_id)
+    and not exists (
+      select 1 from public.friendships f
+      where f.user_a = least((select auth.uid()), receiver_id)
+        and f.user_b = greatest((select auth.uid()), receiver_id)
+    )
+  );
+
+create policy "users access their own private inbox channel"
+  on realtime.messages for select to authenticated
+  using (realtime.topic() = 'inbox:' || (select auth.uid())::text);
+create policy "users publish to their own private inbox channel"
+  on realtime.messages for insert to authenticated
+  with check (realtime.topic() = 'inbox:' || (select auth.uid())::text);
