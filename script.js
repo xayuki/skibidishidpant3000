@@ -2,22 +2,11 @@
   const $ = (s, root=document) => root.querySelector(s);
   const $$ = (s, root=document) => [...root.querySelectorAll(s)];
   const avatar = './Assets/img-icon-profile.jpeg';
-  const people = [
-    {id:'sigma',name:'Mr_Sigma',image:'./Assets/img-icon 4.jpeg',status:'Online',online:true,unread:2},
-    {id:'gpro',name:'Gpro-fighter',image:'./Assets/img-icon 3.png',status:'Playing a game',online:true},
-    {id:'moiz',name:'Moiz Hussain',image:'./Assets/img-icon 2.png',status:'Away',online:false,unread:1},
-    {id:'nxn',name:'nxn',image:'./Assets/img-icon 1.png',status:'Online',online:true},
-    {id:'unknown',name:'Unknown_Inj3ctor',image:'./Assets/img-icon.png',status:'Offline',online:false}
-  ];
-  const starter = {
-    sigma:[{author:'them',text:'yo, you on?',time:'10:42 PM'},{author:'me',text:'yeah whats up',time:'10:44 PM'}],
-    gpro:[{author:'them',text:'you playing later?',time:'Yesterday'}],
-    moiz:[{author:'them',text:'sent you something',time:'Yesterday'}],
-    nxn:[],unknown:[]
-  };
+  const people = [];
   let chats = {};
-  try { chats = JSON.parse(localStorage.getItem('skibidi-chats') || '{}'); } catch {}
-  Object.keys(starter).forEach(id => { if (!Array.isArray(chats[id])) chats[id] = starter[id]; });
+  const pendingRequests = [];
+  const notificationItems = [];
+  let currentUserProfile = null;
   let current = null, tab = 'messages', filter = 'online', search = '', youView = 'account', profileReturnTab = 'messages';
   const themeDefaults = {mode:'oled', color1:'#111111', color2:'#343434', angle:135};
   let themeSettings = {...themeDefaults};
@@ -39,6 +28,7 @@
     current=id;
     p.unread=0;
     render();
+    window.dispatchEvent(new CustomEvent('xaynet:open-chat', {detail:{peerId:id, person:p}}));
     $('#mobileChatAvatar').src=p.image; $('#mobileChatPresence').className=presenceClass(p); $('#mobileChatName').textContent=p.name;
     $('#mobileChatStatus').textContent=p.status;
     $('#mobileMessageInput').placeholder='Message @'+p.name+'...';
@@ -51,7 +41,9 @@
     $('#mobileChatScreen').classList.remove('open');
     $('#mobileChatScreen').setAttribute('aria-hidden','true');
     $('#mobileTabbar').classList.remove('hidden');
+    const closedPeer=current;
     current=null; render();
+    window.dispatchEvent(new CustomEvent('xaynet:close-chat', {detail:{peerId:closedPeer}}));
   };
   const renderChat = () => {
     const p=person(current), list=chats[current]||[];
@@ -78,7 +70,7 @@
   const closeProfileSheet = () => { const sheet=$('.mobile-profile-sheet-backdrop'); if(sheet)sheet.remove(); };
   const renderMessages = () => {
     setHeader('Messages','Your conversations');
-    const rows=people.filter(p=>p.name.toLowerCase().includes(search.toLowerCase()));
+    const rows=people.filter(p=>p.hasConversation && p.name.toLowerCase().includes(search.toLowerCase()));
     $('#mobileContent').innerHTML=`
       <div class="mobile-search"><i class="fa-solid fa-magnifying-glass"></i><input id="mobileSearch" placeholder="Find a conversation" value="${esc(search)}"></div>
       <div class="mobile-section-label"><span>DIRECT MESSAGES</span><button id="mobileAddDm"><i class="fa-solid fa-plus"></i></button></div>
@@ -96,27 +88,60 @@
   };
   const renderFriends = () => {
     setHeader('Friends','Stay connected');
-    const visible=people.filter(p=>filter==='all'||(filter==='online'?p.online:filter==='pending'?false:!p.online));
+    const visible = people.filter(p => {
+      if (filter === 'pending') return p.friendState === 'incoming' || p.friendState === 'outgoing';
+      if (filter === 'blocked') return p.friendState === 'blocked';
+      if (filter === 'all') return p.friendState === 'friend';
+      return p.friendState === 'friend' && p.online;
+    });
+    const incoming = visible.filter(p => p.friendState === 'incoming').length;
     $('#mobileContent').innerHTML=`
-      <div class="mobile-friend-tabs">${['online','all','pending','blocked'].map(f=>`<button data-filter="${f}" class="${filter===f?'selected':''}">${f[0].toUpperCase()+f.slice(1)}${f==='pending'?'<span class="mobile-pending-count"> (1)</span>':''}</button>`).join('')}<button class="add-friend-btn" id="addFriend">Add Friend</button></div>
-      <div class="mobile-section-label"><span>${filter==='online'?'ONLINE — '+visible.length:filter.toUpperCase()}</span></div>
-      <div class="mobile-dm-list">${visible.map(p=>`<div class="mobile-friend-row" data-open-profile="${p.id}"><span class="mobile-avatar-wrap"><img src="${p.image}" alt=""><i class="${p.online?'online':''}"></i></span><span class="mobile-dm-copy"><strong>${esc(p.name)}</strong><span>${p.status}</span></span><button class="friend-message" data-chat="${p.id}"><i class="fa-solid fa-message"></i></button></div>`).join('')||'<p class="mobile-empty">No friends to show here.</p>'}</div>`;
+      <div class="mobile-friend-tabs">${['online','all','pending','blocked'].map(f=>`<button data-filter="${f}" class="${filter===f?'selected':''}">${f[0].toUpperCase()+f.slice(1)}${f==='pending'&&incoming?'<span class="mobile-pending-count"> ('+incoming+')</span>':''}</button>`).join('')}<button class="add-friend-btn" id="addFriend">Add Friend</button></div>
+      <div class="mobile-section-label"><span>${filter==='online'?'ONLINE — '+visible.length:filter.toUpperCase()+' — '+visible.length}</span></div>
+      <div class="mobile-dm-list">${visible.map(p=>{
+        const actions = p.friendState==='incoming'
+          ? '<button class="friend-message" data-accept-request="'+p.requestId+'" aria-label="Accept request"><i class="fa-solid fa-check"></i></button><button class="friend-message" data-decline-request="'+p.requestId+'" aria-label="Decline request"><i class="fa-solid fa-xmark"></i></button>'
+          : p.friendState==='outgoing'
+            ? '<button class="friend-message" data-cancel-request="'+p.requestId+'" aria-label="Cancel request"><i class="fa-solid fa-xmark"></i></button>'
+            : p.friendState==='blocked'
+              ? '<button class="friend-message" data-unblock-user="'+p.id+'" aria-label="Unblock user"><i class="fa-solid fa-unlock"></i></button>'
+              : '<button class="friend-message" data-chat="'+p.id+'" aria-label="Message"><i class="fa-solid fa-message"></i></button>';
+        return `<div class="mobile-friend-row" data-open-profile="${p.id}"><span class="mobile-avatar-wrap"><img src="${p.image}" alt=""><i class="${p.online?'online':'offline'}"></i></span><span class="mobile-dm-copy"><strong>${esc(p.name)}</strong><span>${esc(p.status||p.handle||'')}</span></span><span class="friend-actions">${actions}</span></div>`;
+      }).join('')||'<p class="mobile-empty">Nothing to show here yet.</p>'}</div>`;
     $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderFriends();});
     $$('[data-chat]').forEach(b=>b.onclick=e=>{e.stopPropagation();openChat(b.dataset.chat);});
     $$('[data-open-profile]').forEach(b=>b.onclick=()=>{profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
-    $('#addFriend').onclick=()=>openModal('Add Friend',`<p class="modal-description">You can add friends with their username.</p><input class="modal-input" id="friendUsername" placeholder="Enter a username"><button class="modal-primary" id="sendFriendRequest">Send Friend Request</button><p class="modal-feedback" id="friendFeedback"></p>`);
-    $('#sendFriendRequest').onclick=()=>{$('#friendFeedback').textContent=$('#friendUsername').value.trim()?'Friend request queued in this demo.':'Enter a username first.';};
+    $('#addFriend').onclick=()=>openModal('Add Friend',`<p class="modal-description">Add someone with their handle.</p><input class="modal-input" id="friendUsername" placeholder="Enter a handle"><button class="modal-primary" id="sendFriendRequest">Send Friend Request</button><p class="modal-feedback" id="friendFeedback"></p>`);
+    $('#sendFriendRequest').onclick=async()=> {
+      const handle=$('#friendUsername').value.trim();
+      const feedback=$('#friendFeedback');
+      try {
+        await window.XaynetBackend.sendFriendRequest(handle);
+        feedback.textContent='Friend request sent.';
+      } catch (err) { feedback.textContent=err.message||'Could not send friend request.'; }
+    };
   };
-  const renderActivity = () => { setHeader('Activity','Your notifications'); $('#mobileContent').innerHTML='<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>'; };
+  const renderActivity = () => {
+    setHeader('Activity','Your notifications');
+    const rows=notificationItems;
+    $('#mobileContent').innerHTML=rows.length?`
+      <div class="mobile-section-label"><span>RECENT</span></div>
+      <div class="mobile-dm-list">${rows.map(n=>`<button class="mobile-dm-row notification-row" data-notification-id="${n.id}">
+        <span class="mobile-avatar-wrap"><img src="${n.actor?.image||avatar}" alt=""><i class="${n.read_at?'offline':'online'}"></i></span>
+        <span class="mobile-dm-copy"><strong>${esc(n.title||'Notification')}</strong><span>${esc(n.body||'')}</span></span>
+        ${n.read_at?'':'<b class="mobile-dm-unread">NEW</b>'}
+      </button>`).join('')}</div>`
+      :'<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>';
+  };
   const renderYou = () => { if(youView==='appearance'){renderAppearance();return;} renderProfile(null); };
   const renderProfile = (profileId) => {
-    const p=profileId?person(profileId):{id:'me',name:'Anonymou5',image:avatar,status:'Online',online:true}; if(!p)return;
-    const self=!profileId, friends=people.filter(x=>x.id!==p.id);
+    const p=profileId?person(profileId):(currentUserProfile||{id:'me',handle:'',name:'Profile',image:avatar,status:'Offline',online:false}); if(!p)return;
+    const self=!profileId, friends=people.filter(x=>x.friendState==='friend');
     setHeader(self?'Profile':p.name,self?'Your account':'User profile');
     const connection=self?'<div class="profile-connection"><span class="profile-connection-icon"><i class="fa-brands fa-discord"></i></span><div><strong>Discord</strong><span>@anonymou5 ····</span></div><i class="fa-solid fa-circle-check profile-verified"></i></div>':'<div class="profile-no-connections">Connection details unavailable</div>';
     const pics=friends.slice(0,5).map(x=>'<img src="'+x.image+'" alt="'+esc(x.name)+'">').join('');
     const profileMarkup='<section class="mobile-profile-page" data-profile-id="'+p.id+'"><div class="profile-utility-row">'+(self?'':'<button class="profile-back-button" id="profileBack" aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>')+'<span class="profile-presence-label"><i></i> '+(p.online?'ONLINE NOW':esc(p.status).toUpperCase())+'</span><div class="profile-quick-actions"><span class="profile-quick-pill">'+(self?'MY PROFILE':'PROFILE')+'</span><button id="profileMore"><i class="fa-solid fa-ellipsis"></i></button></div></div>'+
-      '<section class="profile-hero-card"><div class="profile-banner"><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><div class="profile-identity"><strong>'+esc(p.name)+'</strong><span>@'+(self?'anonymou5':'••••••')+'</span></div><div class="profile-actions"><button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button><button id="'+(self?'editProfile':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':'fa-user-plus')+'"></i> '+(self?'Edit Profile':'Add Friend')+'</button></div></div></section>'+
+      '<section class="profile-hero-card"><div class="profile-banner"><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><div class="profile-identity"><strong>'+esc(p.name)+'</strong><span>@'+esc(p.handle||'')+'</span></div><div class="profile-actions"><button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button><button id="'+(self?'editProfile':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':'fa-user-plus')+'"></i> '+(self?'Edit Profile':'Add Friend')+'</button></div></div></section>'+
       '<section class="profile-info-card"><div class="profile-card-heading">MEMBER SINCE</div><div class="profile-member-date"><i class="fa-regular fa-calendar"></i><span>'+(self?'September 18, 2026':'Member since date unavailable')+'</span></div></section><section class="profile-info-card"><div class="profile-card-heading">CONNECTIONS</div>'+connection+'</section>'+
       '<button class="profile-info-card profile-friends-card" id="profileFriends"><span class="profile-card-heading">FRIENDS <small>'+friends.length+'</small></span><span class="profile-friends-row"><span class="profile-friend-stack">'+pics+'</span><i class="fa-solid fa-chevron-right"></i></span></button></section>';
     if(self) {
@@ -136,9 +161,9 @@
       grab.addEventListener('pointerup',finishDrag);
       grab.addEventListener('pointercancel',finishDrag);
     }
-    const edit=()=>{openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><label class="modal-label">Username</label><input class="modal-input" value="@anonymou5" disabled><button class="modal-primary" id="saveProfile">Save Changes</button>');$('#saveProfile').onclick=()=>{const n=$('#profileNameInput').value.trim();if(n){$('.profile-identity strong').textContent=n;closeModal();}};};
+    const edit=()=>{openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" maxlength="40" value="'+esc(p.name||'')+'"><label class="modal-label">Username</label><input class="modal-input" id="profileHandleInput" maxlength="24" value="'+esc(p.handle||'')+'"><label class="modal-label">About me</label><textarea class="modal-input" id="profileBioInput" rows="3" maxlength="190">'+esc(p.bio||'')+'</textarea><button class="modal-primary" id="saveProfile">Save Changes</button><p class="modal-feedback" id="profileFeedback"></p>');$('#saveProfile').onclick=async()=>{try{await window.XaynetBackend.updateProfile({display_name:$('#profileNameInput').value,handle:$('#profileHandleInput').value,bio:$('#profileBioInput').value});closeModal();}catch(err){$('#profileFeedback').textContent=err.message||'Could not save profile.';}};};
     $('#profileMessage').onclick=()=>{if(self){tab='messages';render();}else{closeProfileSheet();openChat(p.id);}};
-    if(self)$('#editProfile').onclick=edit; else $('#profileAddFriend').onclick=()=>openModal('Friend request','<p class="modal-description">Friend requests are not connected in this demo.</p><button class="modal-primary" id="doneSetting">Okay</button>');
+    if(self)$('#editProfile').onclick=edit; else $('#profileAddFriend').onclick=async()=>{try{await window.XaynetBackend.sendFriendRequest(p.handle);closeProfileSheet();}catch(err){openModal('Friend request','<p class="modal-description">'+esc(err.message||'Could not send request.')+'</p><button class="modal-primary" id="doneSetting">Okay</button>');}};
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
     $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
     if(!self)$('#profileBack').onclick=closeProfileSheet;
@@ -202,24 +227,61 @@
     $$('.mobile-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
     if(tab==='messages')renderMessages(); else if(tab==='friends')renderFriends(); else if(tab==='notifications')renderActivity(); else renderYou();
   };
+  window.XaynetApp = {
+    people, chats,
+    render,
+    renderChat,
+    openChat,
+    openModal,
+    closeModal,
+    setPeople(rows) { people.splice(0,people.length,...rows); render(); },
+    setChats(rows) { chats = rows || {}; if(current) renderChat(); render(); },
+    setProfile(profile) { currentUserProfile = profile; render(); },
+    setPending(rows) { pendingRequests.splice(0,pendingRequests.length,...(rows||[])); },
+    setNotifications(rows) { notificationItems.splice(0,notificationItems.length,...(rows||[])); if(tab==='notifications')renderActivity(); },
+    get currentPeerId() { return current; },
+    get currentPerson() { return person(current); },
+    setTab(name) { tab=name; render(); }
+  };
   const showNewMessage=()=>openModal('New Message',`<p class="modal-description">Choose someone to start a conversation.</p><div class="modal-people">${people.map(p=>`<button data-new-chat="${p.id}"><img src="${p.image}" alt=""><span>${esc(p.name)}</span><i class="fa-solid fa-chevron-right"></i></button>`).join('')}</div>`);
   $$('.mobile-tab').forEach(b=>b.addEventListener('click',()=>{if(current)closeChat();tab=b.dataset.tab;render();}));
   $('#mobileBack').onclick=closeChat;
   $('#mobileNew').onclick=showNewMessage;
   $('#mobileHome').onclick=()=>{if(current)closeChat();tab='messages';render();};
   $('#mobileChatMessages').addEventListener('click',e=>{if(e.target.closest('[data-profile]')&&current){profileReturnTab='messages';const id=current;renderProfile(id);}});
+  $('#mobileMessageInput').addEventListener('input',e=>window.dispatchEvent(new CustomEvent('xaynet:typing',{detail:{peerId:current,typing:!!e.target.value}})));
   $('#mobileComposer').addEventListener('submit',e=>{
     e.preventDefault();const input=$('#mobileMessageInput'),text=input.value.trim();if(!text||!current)return;
-    chats[current].push({author:'me',text,time:new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})});
-    save();input.value='';renderChat();
+    window.dispatchEvent(new CustomEvent('xaynet:send-message',{detail:{peerId:current,text}}));
+    input.value='';
   });
   $('#mobileCall').onclick=()=>openModal('Start a call','<p class="modal-description">Voice and video calling are visual-only in this mockup.</p><button class="modal-primary" id="doneSetting">Okay</button>');
   $('#mobileChatMore').onclick=()=>openModal('Conversation','<button class="modal-list-action" id="viewProfile">View Profile</button><button class="modal-list-action" id="closeConversation">Close Conversation</button>');
   $('#composerAdd').onclick=()=>openModal('Attachments','<p class="modal-description">Attachments are not connected in this demo.</p><button class="modal-primary" id="doneSetting">Okay</button>');
   $('#composerEmoji').onclick=()=>{$('#mobileMessageInput').value+=' 🙂 ';$('#mobileMessageInput').focus();};
   $('#mobileModalBackdrop').addEventListener('click',e=>{if(e.target.id==='mobileModalBackdrop')closeModal();});
+  $('#mobileContent').addEventListener('click',async e=>{
+    const accept=e.target.closest('[data-accept-request]');
+    const decline=e.target.closest('[data-decline-request]');
+    const cancel=e.target.closest('[data-cancel-request]');
+    const unblock=e.target.closest('[data-unblock-user]');
+    try {
+      if(accept) await window.XaynetBackend.respondFriendRequest(accept.dataset.acceptRequest,true);
+      if(decline) await window.XaynetBackend.respondFriendRequest(decline.dataset.declineRequest,false);
+      if(cancel) await window.XaynetBackend.cancelFriendRequest(cancel.dataset.cancelRequest);
+      if(unblock) await window.XaynetBackend.unblockUser(unblock.dataset.unblockUser);
+    } catch(err) { window.XaynetApp.openModal('Action failed','<p class="modal-description">'+esc(err.message||'Please try again.')+'</p>'); }
+    const notice=e.target.closest('[data-notification-id]');
+    if(notice) window.XaynetBackend.openNotification(notice.dataset.notificationId);
+  });
+  $('#mobileChatMessages').addEventListener('click',async e=>{
+    const reply=e.target.closest('[data-reply-message]');
+    const react=e.target.closest('[data-react-message]');
+    if(reply) window.XaynetBackend.setReplyTarget(reply.dataset.replyMessage);
+    if(react) { try { await window.XaynetBackend.toggleReaction(react.dataset.replyMessage||react.dataset.reactMessage,react.dataset.emoji); } catch(err) { console.error(err); } }
+  });
   $('#mobileModal').addEventListener('click',e=>{
-    const newChat=e.target.closest('[data-new-chat]');if(newChat){const id=newChat.dataset.newChat;closeModal();openChat(id);return;}
+    const newChat=e.target.closest('[data-new-chat]');if(newChat){const id=newChat.dataset.newChat;closeModal();Promise.resolve(window.XaynetBackend?.startDm(id)).then(()=>openChat(id)).catch(err=>openModal('Could not start conversation','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>'));return;}
     const friend=e.target.closest('[data-friend-chat]');if(friend){const id=friend.dataset.friendChat;closeModal();tab='messages';render();openChat(id);return;}
     if(e.target.id==='profileEditOption'){closeModal();$('#editProfile')?.click();return;}
     if(e.target.id==='profileAppearanceOption'){closeModal();youView='appearance';renderAppearance();return;}
