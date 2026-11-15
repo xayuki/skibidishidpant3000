@@ -787,7 +787,7 @@
       const file=input.files?.[0];
       if(!file)return;
       if(file.size>15*1024*1024){window.XaynetApp.openModal('File too large','<p class="modal-description">Attachments must be 15 MB or smaller.</p>');return;}
-      const peerId=window.XaynetApp.currentPeerId;
+      const peerId=window.XaynetApp.currentPeerId||activeDesktopPeerId;
       if(!peerId)return;
       try{
         const conversationId=await startDm(peerId);
