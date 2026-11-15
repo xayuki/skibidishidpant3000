@@ -934,7 +934,7 @@
     if(localStorage.getItem('xaynet-cloak-locked')==='1'){
       authUser=null;
       try { await client.auth.signOut({scope:'local'}); } catch {}
-      showGate('Cloak is locked. Sign in to unlock your account.');
+      showGate('Sign in to continue to your account.');
       booting=false;
       return;
     }
