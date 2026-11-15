@@ -65,10 +65,10 @@
         const authorName=m.author==='me'?(currentUserProfile?.name||'You'):p.name;
         const authorImage=m.author==='me'?(currentUserProfile?.image||avatar):p.image;
         return `<article class="chat-message ${m.author==='me'?'mine':''} ${grouped?'grouped':''} ${m.pending?'is-pending':''}" data-message-id="${m.id}">
-          ${m.replyText?`<div class="chat-reply-quote"><span class="reply-context-arrow">↳</span><span>${esc(m.replyText.slice(0,100))}</span></div>`:''}
           ${grouped?'<span class="chat-message-gutter-time">'+esc(m.time||'')+'</span>':`<img src="${authorImage}" alt=""> `}
           <div class="chat-message-body">
             ${grouped?'':`<div class="chat-message-meta"><strong>${esc(authorName)}</strong><time>${esc(m.time||'Now')}</time></div>`}
+          ${m.replyText?`<div class="chat-reply-quote"><span class="reply-context-arrow">↳</span><span>${esc(m.replyText.slice(0,100))}</span></div>`:''}
             ${m.text?`<p>${esc(m.text)}${m.edited_at?' <small class="message-edited-label">(edited)</small>':''}</p>`:''}
             ${renderChatAttachments(m.attachments||[])}
             ${(m.reactions||[]).length?`<div class="message-reactions">${m.reactions.map(r=>`<button data-react-message="${m.id}" data-emoji="${esc(r.emoji)}" class="${r.mine?'mine-reaction':''}">${esc(r.emoji)}</button>`).join('')}</div>`:''}
