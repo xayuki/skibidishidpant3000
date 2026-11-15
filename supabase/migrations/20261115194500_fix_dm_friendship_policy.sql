@@ -10,8 +10,8 @@ create policy "users create direct conversations with friends"
     and exists (
       select 1
       from public.friendships f
-      where f.user_a = least(user_a,user_b)
-        and f.user_b = greatest(user_a,user_b)
+      where f.user_a = least(dm_conversations.user_a, dm_conversations.user_b)
+        and f.user_b = greatest(dm_conversations.user_a, dm_conversations.user_b)
     )
   );
 
