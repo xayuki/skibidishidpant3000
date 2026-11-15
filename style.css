@@ -884,7 +884,7 @@ aside .icon i { background-color: #111; }
   .mobile-tabbar {
     height:66px; min-height:66px; padding:7px 8px max(7px,env(safe-area-inset-bottom));
     display:flex; align-items:center; justify-content:space-around;
-    background:#080808; border-top:1px solid #202020;
+    background:#080808; border-top:0;
   }
   .mobile-tabbar.hidden { display:none; }
   .mobile-tab {
