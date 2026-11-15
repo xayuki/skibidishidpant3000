@@ -203,20 +203,34 @@
       const own=pointOwned(s);
       if(!own){s.trail.push({x:s.x,y:s.y});}
       else if(s.trail.length>5)capture(s);
-      // Colliding with an exposed trail ends the run / bot.
-      for(const other of [player,...bots]){
-        if(other===s||!other.alive||!other.trail.length)continue;
-        for(let i=0;i<other.trail.length;i+=3){const p=other.trail[i];if(Math.hypot(s.x-p.x,s.y-p.y)<s.r+5){if(s.id===0)over=true;else s.alive=false;break;}}
+      // Paper.io rule: touching an opponent's exposed trail eliminates its owner.
+      for(const owner of [player,...bots]){
+        if(owner===s||!owner.alive||owner.trail.length<2)continue;
+        let hit=false;
+        for(let i=1;i<owner.trail.length;i++){
+          const p=owner.trail[i-1],q=owner.trail[i],dx=q.x-p.x,dy=q.y-p.y;
+          const length2=dx*dx+dy*dy;
+          const t=length2?Math.max(0,Math.min(1,((s.x-p.x)*dx+(s.y-p.y)*dy)/length2)):0;
+          const nearestX=p.x+t*dx,nearestY=p.y+t*dy;
+          if(Math.hypot(s.x-nearestX,s.y-nearestY)<s.r+4){hit=true;break;}
+        }
+        if(hit){
+          burst(owner.trail,owner.color,owner.id===0?40:24);
+          if(owner.id===0)over=true;
+          else owner.alive=false;
+        }
       }
     };
     const drawSnake=(s)=>{
       if(!s.alive)return;
       const x=s.x-camera.x+innerWidth/2,y=s.y-camera.y+innerHeight/2;
-      ctx.save();ctx.translate(x,y);ctx.rotate(s.angle);
+      ctx.save();ctx.translate(x,y);
       ctx.fillStyle=s.id===0?'#f4f4f4':s.color;
-      ctx.beginPath();ctx.arc(0,0,12,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#151515';ctx.beginPath();ctx.arc(4,-3,2,0,Math.PI*2);ctx.arc(4,3,2,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle='#151515';ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(-2,0,4,-.7,.7);ctx.stroke();
+      ctx.beginPath();ctx.arc(0,0,13,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#171717';
+      ctx.beginPath();ctx.arc(-4,-3,1.8,0,Math.PI*2);ctx.arc(4,-3,1.8,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='#171717';ctx.lineWidth=1.5;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(-3,3);ctx.quadraticCurveTo(0,6,3,3);ctx.stroke();
       ctx.restore();
       if(s.trail.length>1){ctx.beginPath();s.trail.forEach((p,i)=>{const xx=p.x-camera.x+innerWidth/2,yy=p.y-camera.y+innerHeight/2;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.strokeStyle=s.id===0?'#fff9':s.color+'99';ctx.lineWidth=3;ctx.setLineDash([5,7]);ctx.stroke();ctx.setLineDash([]);}
     };
@@ -228,7 +242,7 @@
         const pts=region.points;if(pts.length<3)return;
         ctx.beginPath();pts.forEach((p,i)=>{const x=p.x-left,y=p.y-top;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();
         ctx.fillStyle=region.id===0?'#34383e':colors[region.id]+'42';ctx.fill();
-        ctx.strokeStyle=region.id===0?'#777d86':colors[region.id]+'aa';ctx.lineWidth=2;ctx.stroke();
+        // No per-capture outlines: territory reads as one continuous filled region.
       });
       ctx.strokeStyle='#25282d';ctx.lineWidth=5;ctx.strokeRect(-left,-top,W,H);
 
