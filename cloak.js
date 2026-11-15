@@ -3,7 +3,6 @@
   const LOCK_KEY='xaynet-cloak-locked';
   const TIMEOUT_KEY='xaynet-cloak-timeout';
   const $=(s,r=document)=>r.querySelector(s);
-  const $=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const gate=$('#authGate');
   const panel=$('.auth-panel',gate);
   const locked=()=>{try{return localStorage.getItem(LOCK_KEY)==='1';}catch{return false;}};
@@ -110,7 +109,7 @@
     const setDir=d=>{if(d.x===-dir.x&&d.y===-dir.y)return;next=d;};
     const key=e=>{const map={ArrowUp:{x:0,y:-1},w:{x:0,y:-1},ArrowDown:{x:0,y:1},s:{x:0,y:1},ArrowLeft:{x:-1,y:0},a:{x:-1,y:0},ArrowRight:{x:1,y:0},d:{x:1,y:0}};if(map[e.key]){e.preventDefault();setDir(map[e.key]);}};
     document.addEventListener('keydown',key);
-    const controls=$$('#cloakGamePad button');
+    const controls=Array.from(document.querySelectorAll('#cloakGamePad button'));
     controls.forEach(b=>b.onclick=()=>setDir(JSON.parse(b.dataset.dir)));
     const restart=()=>{snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}];dir=next={x:1,y:0};score=0;dead=false;placeFood();draw();};
     if(start)start.onclick=restart;
