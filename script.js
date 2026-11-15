@@ -3,9 +3,9 @@
   const $$ = (s, root=document) => [...root.querySelectorAll(s)];
   const avatar = './Assets/img-icon-profile.jpeg';
   const people = [
-    {id:'sigma',name:'Mr_Sigma',image:'./Assets/img-icon 4.jpeg',status:'Online',online:true},
+    {id:'sigma',name:'Mr_Sigma',image:'./Assets/img-icon 4.jpeg',status:'Online',online:true,unread:2},
     {id:'gpro',name:'Gpro-fighter',image:'./Assets/img-icon 3.png',status:'Playing a game',online:true},
-    {id:'moiz',name:'Moiz Hussain',image:'./Assets/img-icon 2.png',status:'Away',online:false},
+    {id:'moiz',name:'Moiz Hussain',image:'./Assets/img-icon 2.png',status:'Away',online:false,unread:1},
     {id:'nxn',name:'nxn',image:'./Assets/img-icon 1.png',status:'Online',online:true},
     {id:'unknown',name:'Unknown_Inj3ctor',image:'./Assets/img-icon.png',status:'Offline',online:false}
   ];
@@ -32,11 +32,14 @@
   const save = () => { try { localStorage.setItem('skibidi-chats', JSON.stringify(chats)); } catch {} };
   const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const person = id => people.find(p=>p.id===id);
+  const presenceClass = p => p.online ? 'online' : 'offline';
   const setHeader = (title,sub='') => { $('#mobileTitle').textContent=title; $('#mobileSubtitle').textContent=sub; };
   const openChat = id => {
     const p=person(id); if(!p) return;
     current=id;
-    $('#mobileChatAvatar').src=p.image; $('#mobileChatName').textContent=p.name;
+    p.unread=0;
+    render();
+    $('#mobileChatAvatar').src=p.image; $('#mobileChatPresence').className=presenceClass(p); $('#mobileChatName').textContent=p.name;
     $('#mobileChatStatus').textContent=p.status;
     $('#mobileMessageInput').placeholder='Message @'+p.name+'...';
     renderChat();
@@ -54,7 +57,7 @@
     const p=person(current), list=chats[current]||[];
     $('#mobileChatMessages').innerHTML = `
       <div class="chat-profile-intro">
-        <div class="chat-profile-avatar"><img src="${p.image}" alt=""></div>
+        <div class="chat-profile-avatar mobile-avatar-wrap"><img src="${p.image}" alt=""><i class="${presenceClass(p)}"></i></div>
         <h2>${esc(p.name)}</h2><p>This is the beginning of your direct message history with <strong>@${esc(p.name)}</strong>.</p>
         <button class="chat-profile-button" data-profile="${p.id}">View profile</button>
       </div>
@@ -81,9 +84,9 @@
       <div class="mobile-dm-list">${rows.map(p=>{
         const last=(chats[p.id]||[]).slice(-1)[0];
         return `<button class="mobile-dm-row" data-chat="${p.id}">
-          <span class="mobile-avatar-wrap"><img src="${p.image}" alt=""><i class="${p.online?'online':''}"></i></span>
+          <span class="mobile-avatar-wrap"><img src="${p.image}" alt=""><i class="${presenceClass(p)}"></i></span>
           <span class="mobile-dm-copy"><strong>${esc(p.name)}</strong><span>${last?esc(last.author==='me'?'You: '+last.text:last.text):p.status}</span></span>
-          <i class="fa-solid fa-chevron-right mobile-row-chevron"></i>
+          ${p.unread?'<b class="mobile-dm-unread">'+p.unread+'</b>':''}<i class="fa-solid fa-chevron-right mobile-row-chevron"></i>
         </button>`;
       }).join('')||'<p class="mobile-empty">No conversations found.</p>'}</div>`;
     $('#mobileSearch').addEventListener('input',e=>{search=e.target.value; const pos=e.target.selectionStart;renderMessages();$('#mobileSearch').focus();$('#mobileSearch').setSelectionRange(pos,pos);});
@@ -104,7 +107,7 @@
   };
   const renderActivity = () => { setHeader('Activity','Your notifications'); $('#mobileContent').innerHTML='<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>'; };
   const renderYou = () => { if(youView==='appearance'){renderAppearance();return;} setHeader('You','Your account'); $('#mobileContent').innerHTML=`
-    <div class="mobile-user-card"><img src="${avatar}" alt=""><div><strong>Anonymou5</strong><span>@anonymou5 · Online</span></div><button id="editProfile"><i class="fa-solid fa-pen"></i></button></div>
+    <div class="mobile-user-card"><span class="mobile-avatar-wrap account-avatar"><img src="${avatar}" alt=""><i class="online"></i></span><div><strong>Anonymou5</strong><span>@anonymou5 · Online</span></div><button id="editProfile"><i class="fa-solid fa-pen"></i></button></div>
     <div class="mobile-settings-group"><button data-setting="Set Status"><i class="fa-regular fa-face-smile"></i><span>Set Status</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="My Account"><i class="fa-regular fa-user"></i><span>My Account</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Appearance"><i class="fa-solid fa-palette"></i><span>Appearance</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Notifications"><i class="fa-regular fa-bell"></i><span>Notifications</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Privacy & Safety"><i class="fa-solid fa-shield-halved"></i><span>Privacy & Safety</span><i class="fa-solid fa-chevron-right"></i></button></div>
     <button class="mobile-logout" id="logoutDemo">Log Out</button>`;
     $('#editProfile').onclick=()=>{openModal('Edit Profile','<p class="modal-description">Profile editing is a local mockup.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><button class="modal-primary" id="saveProfile">Save Changes</button>');$('#saveProfile').onclick=()=>{const name=$('#profileNameInput').value.trim();if(name){$('.mobile-user-card strong').textContent=name;closeModal();}};};
@@ -179,7 +182,7 @@
   $('#mobileBack').onclick=closeChat;
   $('#mobileNew').onclick=showNewMessage;
   $('#mobileHome').onclick=()=>{if(current)closeChat();tab='messages';render();};
-  $('#mobileChatMessages').addEventListener('click',e=>{if(e.target.closest('[data-profile]')&&current){const p=person(current);openModal(p.name,`<div class="modal-profile"><img src="${p.image}" alt=""><h2>${esc(p.name)}</h2><p>${p.status}</p></div><button class="modal-primary" id="doneSetting">Done</button>`);}});
+  $('#mobileChatMessages').addEventListener('click',e=>{if(e.target.closest('[data-profile]')&&current){const p=person(current);openModal(p.name,`<div class="modal-profile"><span class="mobile-avatar-wrap modal-profile-avatar"><img src="${p.image}" alt=""><i class="${presenceClass(p)}"></i></span><h2>${esc(p.name)}</h2><p>${p.status}</p></div><button class="modal-primary" id="doneSetting">Done</button>`);}});
   $('#mobileComposer').addEventListener('submit',e=>{
     e.preventDefault();const input=$('#mobileMessageInput'),text=input.value.trim();if(!text||!current)return;
     chats[current].push({author:'me',text,time:new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})});
