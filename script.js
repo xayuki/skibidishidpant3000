@@ -137,12 +137,6 @@
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+people.map(p=>'<button data-friend-chat="'+p.id+'"><img src="'+p.image+'" alt=""><span>'+esc(p.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
     $('#profileMore').onclick=()=>openModal('Profile options','<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button>');
     $('#profileHeroMore').onclick=()=>$('#profileMore').click();
-    $('#mobileModal').addEventListener('click',e=>{
-      if(e.target.id==='profileEditOption'){closeModal();edit();}
-      if(e.target.id==='profileAppearanceOption'){closeModal();youView='appearance';renderAppearance();}
-      const friend=e.target.closest('[data-friend-chat]');
-      if(friend){const id=friend.dataset.friendChat;closeModal();tab='messages';render();openChat(id);}
-    });
   };
 
   const renderAppearance = () => {
@@ -222,6 +216,9 @@
   $('#mobileModalBackdrop').addEventListener('click',e=>{if(e.target.id==='mobileModalBackdrop')closeModal();});
   $('#mobileModal').addEventListener('click',e=>{
     const newChat=e.target.closest('[data-new-chat]');if(newChat){const id=newChat.dataset.newChat;closeModal();openChat(id);return;}
+    const friend=e.target.closest('[data-friend-chat]');if(friend){const id=friend.dataset.friendChat;closeModal();tab='messages';render();openChat(id);return;}
+    if(e.target.id==='profileEditOption'){closeModal();$('#editProfile')?.click();return;}
+    if(e.target.id==='profileAppearanceOption'){closeModal();youView='appearance';renderAppearance();return;}
     if(e.target.id==='doneSetting')closeModal();
     if(e.target.id==='closeConversation'){closeModal();closeChat();}
     if(e.target.id==='viewProfile'&&current){const p=person(current);openModal(p.name,`<div class="modal-profile"><img src="${p.image}" alt=""><h2>${esc(p.name)}</h2><p>${p.status}</p></div><button class="modal-primary" id="doneSetting">Done</button>`);}
