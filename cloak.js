@@ -129,7 +129,6 @@
     const scoreEl=$('#cloakSnakeScore'), start=$('#cloakSnakeStart');
     const placeFood=()=>{let p;do{p={x:Math.floor(Math.random()*size),y:Math.floor(Math.random()*size)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));food=p;};
     const resize=()=>{const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';cell=Math.min(innerWidth,innerHeight)/size;ctx.setTransform(dpr,0,0,dpr,0,0);draw();};
-    resize();window.addEventListener('resize',resize);
     const draw=()=>{
       const ox=(innerWidth-size*cell)/2,oy=(innerHeight-size*cell)/2;
       ctx.fillStyle='#020202';ctx.fillRect(0,0,innerWidth,innerHeight);
@@ -140,6 +139,7 @@
       if(dead){ctx.fillStyle='#fff';ctx.font='bold 24px sans-serif';ctx.textAlign='center';ctx.fillText('GAME OVER',innerWidth/2,innerHeight/2);ctx.font='14px sans-serif';ctx.fillText('tap restart to play again',innerWidth/2,innerHeight/2+28);}
       if(scoreEl)scoreEl.textContent='SCORE '+score;
     };
+    resize();window.addEventListener('resize',resize);
     const step=()=>{
       if(dead)return;
       dir=next;const head={x:(snake[0].x+dir.x+size)%size,y:(snake[0].y+dir.y+size)%size};
@@ -167,12 +167,12 @@
   }
   if(panel&&!$('#cloakGame')) {
     const game=document.createElement('section');game.className='cloak-game';game.id='cloakGame';
-    game.innerHTML='<div class="cloak-game-heading"><strong>Snake</strong><div class="cloak-game-heading-right"><span class="cloak-game-score" id="cloakSnakeScore">SCORE 0</span><button type="button" class="cloak-unlock-toggle" id="cloakUnlockToggle">Unlock account</button></div></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Snake game"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>use arrow keys, WASD, or swipe</span></div><div class="cloak-game-pad" id="cloakGamePad"><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:-1}" aria-label="Up">↑</button><button type="button" data-dir="{&quot;x&quot;:-1,&quot;y&quot;:0}" aria-label="Left">←</button><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:1}" aria-label="Down">↓</button><button type="button" data-dir="{&quot;x&quot;:1,&quot;y&quot;:0}" aria-label="Right">→</button></div>';
+    game.innerHTML='<div class="cloak-game-heading"><strong>Snake</strong><div class="cloak-game-heading-right"><span class="cloak-game-score" id="cloakSnakeScore">SCORE 0</span><button type="button" class="cloak-unlock-toggle" id="cloakUnlockToggle">Log in</button></div></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Snake game"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>use arrow keys, WASD, or swipe</span></div><div class="cloak-game-pad" id="cloakGamePad"><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:-1}" aria-label="Up">↑</button><button type="button" data-dir="{&quot;x&quot;:-1,&quot;y&quot;:0}" aria-label="Left">←</button><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:1}" aria-label="Down">↓</button><button type="button" data-dir="{&quot;x&quot;:1,&quot;y&quot;:0}" aria-label="Right">→</button></div>';
     gate?.appendChild(game);
     const unlock=$('#cloakUnlockToggle');
     unlock?.addEventListener('click',()=>{
       const open=gate.classList.toggle('cloak-auth-open');
-      unlock.textContent=open?'Close sign in':'Unlock account';
+      unlock.textContent=open?'Close':'Log in';
       if(open) setTimeout(()=>$('#authHandle')?.focus(),80);
     });
   }
