@@ -85,7 +85,7 @@
     const data=row.payload||{};
     try{
       if(row.kind==='offer'){
-        if(call){call={...call,peerId:row.sender_id,conversationId:row.conversation_id,id:row.call_id};await send('busy').catch(()=>{});call=null;return;}
+        if(call){await window.XaynetBackend.client.from('call_signals').insert({call_id:row.call_id,conversation_id:row.conversation_id,sender_id:userId,recipient_id:row.sender_id,kind:'busy',payload:{}}).catch(()=>{});return;}
         pendingOffer=row;
         const peer=window.XaynetApp?.people?.find(p=>p.id===row.sender_id);
         show(peer?.name||'Incoming call',data.mode||'audio');
@@ -152,6 +152,8 @@
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_signals',filter:'recipient_id=eq.'+id},payload=>handleSignal(payload.new))
       .subscribe();
   };
+  $('#mobileCall')?.addEventListener('click',()=>{const peerId=window.XaynetApp?.currentPeerId;if(peerId)start(peerId,'audio').catch(error=>window.XaynetApp?.openModal('Could not start call','<p class="modal-description">'+esc(error.message||'Check microphone permissions and try again.')+'</p>'));});
+  $('#mobileVideoCall')?.addEventListener('click',()=>{const peerId=window.XaynetApp?.currentPeerId;if(peerId)start(peerId,'video').catch(error=>window.XaynetApp?.openModal('Could not start video call','<p class="modal-description">'+esc(error.message||'Check camera and microphone permissions and try again.')+'</p>'));});
   $('#xayCallMin').onclick=minimize;
   $('#xayAccept').onclick=accept;
   $('#xayDecline').onclick=decline;
