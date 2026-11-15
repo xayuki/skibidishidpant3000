@@ -583,3 +583,22 @@ create policy "users access their own private inbox channel"
 create policy "users publish to their own private inbox channel"
   on realtime.messages for insert to authenticated
   with check (realtime.topic() = 'inbox:' || (select auth.uid())::text);
+
+-- Username is also the password-only login identifier, so keep it stable.
+create or replace function private.guard_profile_handle()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.handle <> old.handle then
+    raise exception 'Handles cannot be changed because they are the password-only login identifier.';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function private.guard_profile_handle() from public, anon, authenticated;
+drop trigger if exists guard_profile_handle on public.profiles;
+create trigger guard_profile_handle
+  before update of handle on public.profiles
+  for each row execute function private.guard_profile_handle();
