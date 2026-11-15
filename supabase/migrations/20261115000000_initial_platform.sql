@@ -312,7 +312,12 @@ create policy "users create direct conversations with friends"
     created_by = (select auth.uid())
     and user_a < user_b
     and ((user_a = (select auth.uid())) or (user_b = (select auth.uid())))
-    and private.are_friends(user_a, user_b)
+    and exists (
+      select 1
+      from public.friendships f
+      where f.user_a = least(dm_conversations.user_a, dm_conversations.user_b)
+        and f.user_b = greatest(dm_conversations.user_a, dm_conversations.user_b)
+    )
   );
 create policy "dm members can see their conversations"
   on public.dm_conversations for select to authenticated
