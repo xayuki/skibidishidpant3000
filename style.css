@@ -2054,3 +2054,7 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 }
 .chat-message.grouped .chat-reply-quote{margin-left:44px}
 .chat-message .chat-reply-quote>span:last-child{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Allow the reply reference to occupy its own full row above the avatar and message body. */
+.chat-message{flex-wrap:wrap}
+.chat-message .chat-reply-quote{flex:0 0 calc(100% - 44px);width:calc(100% - 44px);max-width:calc(100% - 44px)}
