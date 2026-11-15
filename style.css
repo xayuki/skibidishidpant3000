@@ -1265,3 +1265,25 @@ aside .icon i { background-color: #111; }
     box-shadow:0 0 0 1px #fff inset !important;
   }
 }
+
+
+/* Consistent profile presence across every mobile avatar surface */
+.mobile-avatar-wrap i.offline{background:#747f8d!important}
+.account-avatar{width:52px;height:52px;display:block}
+.account-avatar img{width:52px;height:52px}
+.chat-header-avatar{width:36px;height:36px;display:block;flex:none}
+.chat-header-avatar img{width:36px;height:36px}
+.chat-header-avatar i{width:12px;height:12px;right:-1px;bottom:0;border-width:2px}
+.chat-profile-avatar{position:relative;overflow:visible!important}
+.chat-profile-avatar img{display:block;border-radius:50%}
+.chat-profile-avatar i{width:16px;height:16px;right:1px;bottom:1px;border-width:3px}
+.modal-profile-avatar{display:inline-block;width:75px;height:75px;margin-bottom:9px}
+.modal-profile-avatar img{width:75px;height:75px}
+.modal-profile-avatar i{width:16px;height:16px;right:0;bottom:1px;border-width:3px}
+
+/* Readable unread badges and navigation indicators */
+.mobile-dm-unread{min-width:19px;height:19px;padding:0 5px;display:grid;place-items:center;border-radius:10px;background:#f2f3f5;color:#000;font-size:10px;font-weight:800;flex:none}
+.mobile-dm-row:has(.mobile-dm-unread) .mobile-dm-copy strong{color:#fff;font-weight:850}
+.mobile-tab{position:relative}
+.mobile-message-dot{position:absolute;top:3px;right:calc(50% - 18px);width:10px;height:10px;border-radius:50%;background:#ff334f;border:2px solid #080808;box-shadow:0 0 0 1px #f2f3f5,0 0 7px #ff334f99;font-size:0}
+.mobile-tab-dot{width:10px!important;height:10px!important;top:2px!important;right:calc(50% - 18px)!important;background:#ff334f!important;border:2px solid #080808;box-shadow:0 0 0 1px #f2f3f5,0 0 7px #ff334f99}
