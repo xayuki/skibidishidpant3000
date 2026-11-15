@@ -70,7 +70,7 @@
             ${m.replyText?`<div class="chat-reply-quote">${esc(m.replyText.slice(0,150))}</div>`:''}
             ${grouped?'':`<div class="chat-message-meta"><strong>${esc(authorName)}</strong><time>${esc(m.time||'Now')}</time></div>`}
             ${m.text?`<p>${esc(m.text)}${m.edited_at?' <small class="message-edited-label">(edited)</small>':''}</p>`:''}
-            ${(m.attachments||[]).map(a=>`<a class="chat-attachment" href="${esc(a.url||'#')}" target="_blank" rel="noopener">${esc(a.name||'Attachment')}</a>`).join('')}
+            ${renderChatAttachments(m.attachments||[])}
             ${(m.reactions||[]).length?`<div class="message-reactions">${m.reactions.map(r=>`<button data-react-message="${m.id}" data-emoji="${esc(r.emoji)}" class="${r.mine?'mine-reaction':''}">${esc(r.emoji)}</button>`).join('')}</div>`:''}
             <div class="message-actions" role="toolbar" aria-label="Message actions">
               <button data-open-reaction="${m.id}" type="button" aria-label="Add reaction" title="Add reaction"><i class="fa-regular fa-face-smile"></i><span class="reaction-add-mark">+</span></button>
@@ -83,6 +83,31 @@
     `;
     $('#mobileChatMessages').scrollTop=$('#mobileChatMessages').scrollHeight;
   };
+  const renderChatAttachments = attachments => {
+    const media=(attachments||[]).filter(a=>/^image\//i.test(a.mime_type||'')||/^video\//i.test(a.mime_type||''));
+    const other=(attachments||[]).filter(a=>!media.includes(a));
+    const previews=media.map(a=>{
+      const video=/^video\//i.test(a.mime_type||'');
+      const attrs='data-media-viewer="'+esc(a.url||'#')+'" data-media-download="'+esc(a.downloadUrl||a.url||'#')+'" data-media-name="'+esc(a.name||'Media')+'" data-media-type="'+(video?'video':'image')+'"';
+      return video ? '<button type="button" class="chat-media-preview chat-video-preview" '+attrs+' aria-label="Open video"><video src="'+esc(a.url||'#')+'" muted playsinline preload="metadata"></video><span class="chat-video-play"><i class="fa-solid fa-play"></i></span></button>' : '<button type="button" class="chat-media-preview" '+attrs+' aria-label="View image"><img src="'+esc(a.url||'#')+'" alt="'+esc(a.name||'')+'" loading="lazy"></button>';
+    }).join('');
+    return (media.length?'<div class="chat-media-grid count-'+Math.min(media.length,4)+'">'+previews+'</div>':'')+other.map(a=>'<a class="chat-attachment" href="'+esc(a.url||'#')+'" target="_blank" rel="noopener">'+esc(a.name||'Attachment')+'</a>').join('');
+  };
+  const openMediaViewer = ({url,downloadUrl,name,type}) => {
+    if(!url||url==='#')return;
+    document.querySelector('.xaynet-media-viewer')?.remove();
+    const overlay=document.createElement('div');overlay.className='xaynet-media-viewer';
+    overlay.innerHTML='<button class="xaynet-media-close" type="button" aria-label="Close viewer"><i class="fa-solid fa-xmark"></i></button><div class="xaynet-media-stage"></div><div class="xaynet-media-toolbar"><span></span><a class="xaynet-media-download" target="_blank" rel="noopener"><i class="fa-solid fa-download"></i> Download original</a></div>';
+    const stage=overlay.querySelector('.xaynet-media-stage');
+    if(type==='video'){const video=document.createElement('video');video.src=url;video.controls=true;video.autoplay=true;video.playsInline=true;video.preload='metadata';stage.appendChild(video);}else{const img=document.createElement('img');img.src=url;img.alt=name||'Image';stage.appendChild(img);}
+    overlay.querySelector('.xaynet-media-toolbar span').textContent=name||'';
+    const download=overlay.querySelector('.xaynet-media-download');download.href=downloadUrl||url;download.download=name||'';
+    const close=()=>{overlay.querySelector('video')?.pause();overlay.remove();document.removeEventListener('keydown',onKey);};
+    const onKey=e=>{if(e.key==='Escape')close();};
+    overlay.querySelector('.xaynet-media-close').addEventListener('click',close);overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+    document.addEventListener('keydown',onKey);document.body.appendChild(overlay);
+  };
+  document.addEventListener('click',event=>{const trigger=event.target.closest('[data-media-viewer]');if(!trigger)return;event.preventDefault();openMediaViewer({url:trigger.dataset.mediaViewer,downloadUrl:trigger.dataset.mediaDownload,name:trigger.dataset.mediaName,type:trigger.dataset.mediaType});});
   const openModal = (title,body) => {
     const backdrop=$('#mobileModalBackdrop'), modal=$('#mobileModal');
     modal.innerHTML=`<div class="mobile-modal-grab-area"><span class="mobile-modal-grab"></span></div><div class="mobile-modal-content"><div class="mobile-modal-head"><strong>${title}</strong><button id="closeMobileModal" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>${body}</div>`;
