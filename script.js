@@ -64,7 +64,7 @@
         const grouped=!!previous && previous.author===m.author && !m.reply_to && !previous.reply_to;
         const authorName=m.author==='me'?(currentUserProfile?.name||'You'):p.name;
         const authorImage=m.author==='me'?(currentUserProfile?.image||avatar):p.image;
-        return `<article class="chat-message ${m.author==='me'?'mine':''} ${grouped?'grouped':''}" data-message-id="${m.id}">
+        return `<article class="chat-message ${m.author==='me'?'mine':''} ${grouped?'grouped':''} ${m.pending?'is-pending':''}" data-message-id="${m.id}">
           ${grouped?'<span class="chat-message-gutter-time">'+esc(m.time||'')+'</span>':`<img src="${authorImage}" alt=""> `}
           <div class="chat-message-body">
             ${m.replyText?`<div class="chat-reply-quote">${esc(m.replyText.slice(0,150))}</div>`:''}
@@ -72,6 +72,7 @@
             ${m.text?`<p>${esc(m.text)}</p>`:''}
             ${(m.attachments||[]).map(a=>`<a class="chat-attachment" href="${esc(a.url||'#')}" target="_blank" rel="noopener">${esc(a.name||'Attachment')}</a>`).join('')}
             ${(m.reactions||[]).length?`<div class="message-reactions">${m.reactions.map(r=>`<button data-react-message="${m.id}" data-emoji="${esc(r.emoji)}" class="${r.mine?'mine-reaction':''}">${esc(r.emoji)}</button>`).join('')}</div>`:''}
+            ${m.pending?'<span class="message-send-state">Sending</span>':''}
             <div class="message-actions">
               <button data-open-reaction="${m.id}" type="button" aria-label="Add reaction">☺</button>
               <button data-reply-message="${m.id}" type="button">Reply</button>
