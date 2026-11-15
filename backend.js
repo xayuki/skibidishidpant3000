@@ -590,7 +590,11 @@
       attachments:(m.attachments||[]).map(a=>({path:a.path,name:a.name,mime_type:a.mime_type})),
       reactions:(m.reactions||[]).map(r=>({id:r.id,emoji:r.emoji,mine:r.mine}))
     })));
-    const needsMediaHydration=result.some(m=>(m.attachments||[]).some(a=>a.url==='#'||!a.url));
+    const previousById=new Map(previous.map(m=>[m.id,m]));
+    const needsMediaHydration=result.some(m=>(m.attachments||[]).some(a=>{
+      const old=(previousById.get(m.id)?.attachments||[]).find(item=>item.path===a.path);
+      return !old?.url||old.url==='#';
+    }));
     const changed=signature(previous)!==signature(merged)||needsMediaHydration;
     app.chats[peerId]=merged;
     const peer=app.people.find(p=>p.id===peerId);
