@@ -1033,7 +1033,7 @@ aside .icon i { background-color: #111; }
   .mobile-composer {
     min-height:60px; display:flex; align-items:center; gap:9px;
     padding:8px 12px max(8px,env(safe-area-inset-bottom));
-    border-top:1px solid #1c1c1c; background:#080808;
+    border-top:0; background:#080808;
   }
   .mobile-composer input {
     min-width:0; flex:1; height:42px; border:1px solid #252525; outline:0;
