@@ -1961,3 +1961,5 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 .xaynet-admin-message{resize:vertical;min-height:76px}
 .xaynet-admin-current{margin:0;line-height:1.5;overflow-wrap:anywhere}
 @media(max-width:750px){.xaynet-global-announcement{top:calc(env(safe-area-inset-top,0px) + 5px);font-size:12px;padding:10px 11px}}
+
+.xaynet-admin-entry{display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;color:#eee;cursor:pointer}.xaynet-admin-entry>span{display:flex;flex-direction:column;gap:4px}.xaynet-admin-entry strong{font-size:13px}.xaynet-admin-entry small{font-size:11px;color:#858585}.xaynet-admin-entry>i{color:#777;font-size:12px}
