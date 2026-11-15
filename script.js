@@ -130,5 +130,22 @@
   const oldOpenToggle=window.openToggle;
   window.addEventListener('resize',()=>{if(window.innerWidth>750)$('#mobileChatScreen').classList.remove('open');});
   render();
-  window.mic=window.mic||function(){}; window.headp=window.headp||function(){};
+  let desktopMicMuted=false, desktopHeadMuted=false;
+  const muteSound=new Audio('./Assets/discordmute_IZNcLx2.mp3');
+  const unmuteSound=new Audio('./Assets/discord-unmute-sound.mp3');
+  window.mic=function(){
+    desktopMicMuted=!desktopMicMuted;
+    const el=$('#mic');
+    if(el)el.className=desktopMicMuted?'fa-solid fa-microphone-slash mute':'fa-solid fa-microphone';
+    (desktopMicMuted?muteSound:unmuteSound).play().catch(()=>{});
+  };
+  window.headp=function(){
+    desktopHeadMuted=!desktopHeadMuted;
+    const el=$('#head');
+    if(el)el.className=desktopHeadMuted?'fa-solid fa-headphones mute':'fa-solid fa-headphones';
+    (desktopHeadMuted?muteSound:unmuteSound).play().catch(()=>{});
+  };
+  window.openToggle=function(){
+    if(window.innerWidth<750){tab='messages';render();}
+  };
 })();
