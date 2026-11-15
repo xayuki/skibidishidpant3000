@@ -1670,3 +1670,83 @@ main .dm .friends .f-li[data-online="true"] .img-wrapper::after{border-color:#23
 
 /* Pending optimistic messages are only slightly dimmed until confirmed. */
 .chat-message.is-pending .chat-message-body { opacity:.72; }
+
+
+/* Message action toolbar: compact icon-only controls, one clean hover surface. */
+.message-actions {
+  display:flex;
+  align-items:center;
+  gap:3px;
+  padding:3px;
+  border:1px solid #292929;
+  border-radius:8px;
+  background:#000;
+}
+.message-actions button,
+.message-actions button:hover {
+  position:relative;
+  display:grid;
+  place-items:center;
+  width:29px;
+  min-width:29px;
+  height:28px;
+  min-height:28px;
+  padding:0;
+  border:1px solid #303030;
+  border-radius:6px;
+  background:#000;
+  color:#dedede;
+  font-size:12px;
+}
+.message-actions button:hover { border-color:#777; background:#101010; }
+.message-actions button i { pointer-events:none; }
+.reaction-add-mark {
+  position:absolute;
+  right:3px;
+  top:0;
+  font-size:9px;
+  line-height:10px;
+  color:#aaa;
+}
+.message-edited-label {
+  margin-left:5px;
+  color:#666;
+  font-size:10px;
+  font-weight:400;
+  white-space:nowrap;
+}
+.message-edit-input {
+  display:block;
+  min-height:112px;
+  height:auto;
+  padding:11px 12px;
+  resize:vertical;
+  line-height:1.5;
+}
+.modal-danger { background:#171010 !important; border:1px solid #3b2424 !important; color:#eee !important; }
+.modal-danger i { margin-right:7px; }
+
+/* Keep the composer completely unhighlighted; the text field has no box or focus glow. */
+#mobileComposer,
+.mobile-composer,
+#mobileComposer::before,
+#mobileComposer::after {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+#mobileComposer input,
+#mobileComposer input:focus,
+#mobileComposer input:focus-visible {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
+#mobileComposer:focus-within {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+}
