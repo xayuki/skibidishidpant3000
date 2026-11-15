@@ -2070,3 +2070,7 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 }
 .chat-message.grouped .chat-reply-quote{margin-left:0}
 .chat-message .chat-reply-quote>span:last-child{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+
+/* Keep consecutive messages on the same vertical rhythm as the first message. */
+.chat-message.grouped{padding-top:4px!important;padding-bottom:4px!important}
