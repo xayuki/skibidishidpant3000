@@ -79,11 +79,19 @@
     $('#mobileChatMessages').scrollTop=$('#mobileChatMessages').scrollHeight;
   };
   const openModal = (title,body) => {
-    $('#mobileModal').innerHTML=`<div class="mobile-modal-head"><strong>${title}</strong><button id="closeMobileModal" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>${body}`;
-    $('#mobileModalBackdrop').classList.add('show');
+    const backdrop=$('#mobileModalBackdrop'), modal=$('#mobileModal');
+    modal.innerHTML=`<div class="mobile-modal-grab-area"><span class="mobile-modal-grab"></span></div><div class="mobile-modal-content"><div class="mobile-modal-head"><strong>${title}</strong><button id="closeMobileModal" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>${body}</div>`;
+    backdrop.classList.add('show');
     $('#closeMobileModal').onclick=closeModal;
+    const grab=modal.querySelector('.mobile-modal-grab-area');
+    let startY=null, deltaY=0;
+    grab.addEventListener('pointerdown',e=>{startY=e.clientY;deltaY=0;grab.setPointerCapture(e.pointerId);});
+    grab.addEventListener('pointermove',e=>{if(startY===null)return;deltaY=Math.max(0,e.clientY-startY);modal.style.transform='translateY('+deltaY+'px)';});
+    const finish=()=>{if(startY===null)return;if(deltaY>85)closeModal();else modal.style.transform='';startY=null;deltaY=0;};
+    grab.addEventListener('pointerup',finish);
+    grab.addEventListener('pointercancel',finish);
   };
-  const closeModal = () => $('#mobileModalBackdrop').classList.remove('show');
+  const closeModal = () => { $('#mobileModal').style.transform=''; $('#mobileModalBackdrop').classList.remove('show'); };
   const closeProfileSheet = () => { const sheet=$('.mobile-profile-sheet-backdrop'); if(sheet)sheet.remove(); };
   const renderMessages = () => {
     setHeader('Messages','Your conversations');
