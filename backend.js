@@ -4,6 +4,7 @@
   'use strict';
 
   const $ = (selector, root = document) => root.querySelector(selector);
+  const $ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
   const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[ch]));
