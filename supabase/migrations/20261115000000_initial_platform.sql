@@ -457,3 +457,91 @@ grant select, insert, update, delete on
   public.dm_conversations, public.dm_members, public.messages, public.message_reactions,
   public.dm_read_states, public.user_notifications
 to authenticated;
+
+-- Prevent tampering with request participants or message identity during updates.
+alter table public.profiles
+  add constraint profiles_handle_format check (handle ~ '^[a-z0-9][a-z0-9_.]{2,23}$'),
+  add constraint profiles_display_name_length check (char_length(trim(display_name)) between 1 and 40);
+
+create or replace function private.guard_friend_request_update()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.sender_id <> old.sender_id or new.receiver_id <> old.receiver_id then
+    raise exception 'friend request participants are immutable';
+  end if;
+  if old.state <> 'pending' or new.state not in ('accepted','declined') then
+    raise exception 'invalid friend request transition';
+  end if;
+  if (select auth.uid()) <> old.receiver_id then
+    raise exception 'only the receiver can respond';
+  end if;
+  new.responded_at := pg_catalog.now();
+  return new;
+end;
+$$;
+revoke all on function private.guard_friend_request_update() from public, anon, authenticated;
+drop trigger if exists guard_friend_request_update on public.friend_requests;
+create trigger guard_friend_request_update
+  before update of state, sender_id, receiver_id on public.friend_requests
+  for each row execute function private.guard_friend_request_update();
+
+create or replace function private.guard_message_update()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.conversation_id <> old.conversation_id
+     or new.author_id <> old.author_id
+     or new.created_at <> old.created_at then
+    raise exception 'message identity is immutable';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function private.guard_message_update() from public, anon, authenticated;
+drop trigger if exists guard_message_update on public.messages;
+create trigger guard_message_update
+  before update on public.messages
+  for each row execute function private.guard_message_update();
+
+create or replace function private.guard_notification_update()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.recipient_id <> old.recipient_id or new.actor_id is distinct from old.actor_id
+     or new.kind <> old.kind or new.friend_request_id is distinct from old.friend_request_id
+     or new.conversation_id is distinct from old.conversation_id
+     or new.message_id is distinct from old.message_id
+     or new.created_at <> old.created_at then
+    raise exception 'notification data is immutable';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function private.guard_notification_update() from public, anon, authenticated;
+drop trigger if exists guard_notification_update on public.user_notifications;
+create trigger guard_notification_update
+  before update on public.user_notifications
+  for each row execute function private.guard_notification_update();
+
+-- Public avatar media is read-only to visitors; writes are scoped to the owner's folder.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('profile-media', 'profile-media', true, 5242880,
+        array['image/png','image/jpeg','image/webp','image/gif'])
+on conflict (id) do nothing;
+create policy "users upload their own profile media"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'profile-media' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy "users update their own profile media"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'profile-media' and (storage.foldername(name))[1] = (select auth.uid())::text)
+  with check (bucket_id = 'profile-media' and (storage.foldername(name))[1] = (select auth.uid())::text);
+create policy "users delete their own profile media"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'profile-media' and (storage.foldername(name))[1] = (select auth.uid())::text);
