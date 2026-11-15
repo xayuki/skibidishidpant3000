@@ -108,6 +108,7 @@
     startDm,
     sendMessage,
     toggleReaction,
+    deleteMessage,
     setReplyTarget,
     openNotification,
     saveTheme,
@@ -600,6 +601,17 @@
       const peer=currentPeers.get(peerId)||window.XaynetApp.people.find(p=>p.id===peerId);
       if(peer?.conversationId)await loadConversation(peerId,peer.conversationId);
     }
+  }
+
+  async function deleteMessage(messageId) {
+    if(!authUser || !messageId) return;
+    const {error}=await client.from('messages')
+      .update({deleted_at:new Date().toISOString()})
+      .eq('id',messageId).eq('author_id',authUser.id).is('deleted_at',null);
+    if(error)throw error;
+    const peerId=window.XaynetApp.currentPeerId||activeDesktopPeerId;
+    const peer=currentPeers.get(peerId)||window.XaynetApp.people.find(p=>p.id===peerId);
+    if(peer?.conversationId)await loadConversation(peerId,peer.conversationId);
   }
 
   function setReplyTarget(messageId) {
