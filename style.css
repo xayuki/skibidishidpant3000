@@ -1364,4 +1364,4 @@ aside .icon i { background-color: #111; }
 /* Friends navigation indicator and pending request count */
 .mobile-friends-dot{position:absolute;top:4px;right:calc(50% - 15px);width:7px;height:7px;border-radius:50%;background:#ed4245;border:0;outline:0;box-shadow:none}
 .mobile-app[data-theme="oled"] .mobile-friends-dot{background:#ed4245!important;border:0!important;outline:0!important;box-shadow:none!important}
-.mobile-pending-count{color:#ed4245;font-size:12px;font-weight:700;letter-spacing:0}
+.mobile-pending-count{color:inherit;font-size:12px;font-weight:600;letter-spacing:0}
