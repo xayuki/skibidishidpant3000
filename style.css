@@ -871,8 +871,11 @@ aside .icon i { background-color: #111; }
     border:0; border-radius:50%; background:transparent; color:#b5bac1; font-size:18px;
   }
   .mobile-top-action:active,.mobile-chat-action:active { background:#1b1b1b; color:#fff; }
-  .mobile-content {
-    flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain;
+  /* The legacy desktop stylesheet sets every <main> to display:flex.
+     This element is also a <main>, so explicitly restore normal page flow. */
+  main.mobile-content {
+    display:block; width:100%; min-width:0; min-height:0; flex:1;
+    overflow-x:hidden; overflow-y:auto; overscroll-behavior:contain;
     padding:0 0 18px; background:#000; scrollbar-width:none;
   }
   .mobile-content::-webkit-scrollbar,.mobile-friend-tabs::-webkit-scrollbar { display:none; }
