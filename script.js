@@ -75,6 +75,7 @@
     $('#closeMobileModal').onclick=closeModal;
   };
   const closeModal = () => $('#mobileModalBackdrop').classList.remove('show');
+  const closeProfileSheet = () => { const sheet=$('.mobile-profile-sheet-backdrop'); if(sheet)sheet.remove(); };
   const renderMessages = () => {
     setHeader('Messages','Your conversations');
     const rows=people.filter(p=>p.name.toLowerCase().includes(search.toLowerCase()));
@@ -114,17 +115,33 @@
     setHeader(self?'Profile':p.name,self?'Your account':'User profile');
     const connection=self?'<div class="profile-connection"><span class="profile-connection-icon"><i class="fa-brands fa-discord"></i></span><div><strong>Discord</strong><span>@anonymou5 ····</span></div><i class="fa-solid fa-circle-check profile-verified"></i></div>':'<div class="profile-no-connections">Connection details unavailable</div>';
     const pics=friends.slice(0,5).map(x=>'<img src="'+x.image+'" alt="'+esc(x.name)+'">').join('');
-    $('#mobileContent').innerHTML='<section class="mobile-profile-page" data-profile-id="'+p.id+'"><div class="profile-utility-row">'+(self?'':'<button class="profile-back-button" id="profileBack" aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>')+'<span class="profile-presence-label"><i></i> '+(p.online?'ONLINE NOW':esc(p.status).toUpperCase())+'</span><div class="profile-quick-actions"><span class="profile-quick-pill">'+(self?'MY PROFILE':'PROFILE')+'</span><button id="profileMore"><i class="fa-solid fa-ellipsis"></i></button></div></div>'+
-      '<section class="profile-hero-card"><div class="profile-banner"><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><button class="profile-hero-more" id="profileHeroMore"><i class="fa-solid fa-ellipsis"></i></button><div class="profile-identity"><strong>'+esc(p.name)+'</strong><span>@'+(self?'anonymou5':'••••••')+'</span></div><div class="profile-actions"><button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button><button id="'+(self?'editProfile':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':'fa-user-plus')+'"></i> '+(self?'Edit Profile':'Add Friend')+'</button></div></div></section>'+
+    const profileMarkup='<section class="mobile-profile-page" data-profile-id="'+p.id+'"><div class="profile-utility-row">'+(self?'':'<button class="profile-back-button" id="profileBack" aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>')+'<span class="profile-presence-label"><i></i> '+(p.online?'ONLINE NOW':esc(p.status).toUpperCase())+'</span><div class="profile-quick-actions"><span class="profile-quick-pill">'+(self?'MY PROFILE':'PROFILE')+'</span><button id="profileMore"><i class="fa-solid fa-ellipsis"></i></button></div></div>'+
+      '<section class="profile-hero-card"><div class="profile-banner"><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><div class="profile-identity"><strong>'+esc(p.name)+'</strong><span>@'+(self?'anonymou5':'••••••')+'</span></div><div class="profile-actions"><button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button><button id="'+(self?'editProfile':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':'fa-user-plus')+'"></i> '+(self?'Edit Profile':'Add Friend')+'</button></div></div></section>'+
       '<section class="profile-info-card"><div class="profile-card-heading">MEMBER SINCE</div><div class="profile-member-date"><i class="fa-regular fa-calendar"></i><span>'+(self?'September 18, 2026':'Member since date unavailable')+'</span></div></section><section class="profile-info-card"><div class="profile-card-heading">CONNECTIONS</div>'+connection+'</section>'+
       '<button class="profile-info-card profile-friends-card" id="profileFriends"><span class="profile-card-heading">FRIENDS <small>'+friends.length+'</small></span><span class="profile-friends-row"><span class="profile-friend-stack">'+pics+'</span><i class="fa-solid fa-chevron-right"></i></span></button></section>';
+    if(self) {
+      $('#mobileContent').innerHTML=profileMarkup;
+    } else {
+      closeProfileSheet();
+      const overlay=document.createElement('div');
+      overlay.className='mobile-profile-sheet-backdrop';
+      overlay.innerHTML='<section class="mobile-profile-sheet" role="dialog" aria-modal="true" aria-label="'+esc(p.name)+' profile"><div class="profile-sheet-grab-area"><span class="profile-sheet-grab"></span></div><div class="mobile-profile-sheet-content">'+profileMarkup+'</div></section>';
+      $('#mobileApp').appendChild(overlay);
+      overlay.addEventListener('click',e=>{if(e.target===overlay)closeProfileSheet();});
+      const grab=overlay.querySelector('.profile-sheet-grab-area');
+      let dragStartY=null, dragCurrentY=0;
+      grab.addEventListener('pointerdown',e=>{dragStartY=e.clientY;dragCurrentY=0;grab.setPointerCapture(e.pointerId);});
+      grab.addEventListener('pointermove',e=>{if(dragStartY===null)return;dragCurrentY=Math.max(0,e.clientY-dragStartY);overlay.querySelector('.mobile-profile-sheet').style.transform='translateY('+dragCurrentY+'px)';});
+      const finishDrag=()=>{if(dragStartY===null)return;if(dragCurrentY>90)closeProfileSheet();else overlay.querySelector('.mobile-profile-sheet').style.transform='';dragStartY=null;dragCurrentY=0;};
+      grab.addEventListener('pointerup',finishDrag);
+      grab.addEventListener('pointercancel',finishDrag);
+    }
     const edit=()=>{openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><label class="modal-label">Username</label><input class="modal-input" value="@anonymou5" disabled><button class="modal-primary" id="saveProfile">Save Changes</button>');$('#saveProfile').onclick=()=>{const n=$('#profileNameInput').value.trim();if(n){$('.profile-identity strong').textContent=n;closeModal();}};};
-    $('#profileMessage').onclick=()=>{if(self){tab='messages';render();}else openChat(p.id);};
+    $('#profileMessage').onclick=()=>{if(self){tab='messages';render();}else{closeProfileSheet();openChat(p.id);}};
     if(self)$('#editProfile').onclick=edit; else $('#profileAddFriend').onclick=()=>openModal('Friend request','<p class="modal-description">Friend requests are not connected in this demo.</p><button class="modal-primary" id="doneSetting">Okay</button>');
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
     $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
-    $('#profileHeroMore').onclick=()=>$('#profileMore').click();
-    if(!self)$('#profileBack').onclick=()=>{if(current){$('#mobileChatScreen').classList.add('open');$('#mobileChatScreen').setAttribute('aria-hidden','false');$('#mobileTabbar').classList.add('hidden');}else{tab=profileReturnTab;render();}};
+    if(!self)$('#profileBack').onclick=closeProfileSheet;
   };
   const renderAppearance = () => {
     setHeader('Appearance','Make the app look the way you want');
@@ -190,7 +207,7 @@
   $('#mobileBack').onclick=closeChat;
   $('#mobileNew').onclick=showNewMessage;
   $('#mobileHome').onclick=()=>{if(current)closeChat();tab='messages';render();};
-  $('#mobileChatMessages').addEventListener('click',e=>{if(e.target.closest('[data-profile]')&&current){profileReturnTab='messages';const id=current;$('#mobileChatScreen').classList.remove('open');$('#mobileChatScreen').setAttribute('aria-hidden','true');$('#mobileTabbar').classList.remove('hidden');renderProfile(id);}});
+  $('#mobileChatMessages').addEventListener('click',e=>{if(e.target.closest('[data-profile]')&&current){profileReturnTab='messages';const id=current;renderProfile(id);}});
   $('#mobileComposer').addEventListener('submit',e=>{
     e.preventDefault();const input=$('#mobileMessageInput'),text=input.value.trim();if(!text||!current)return;
     chats[current].push({author:'me',text,time:new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})});
@@ -210,7 +227,7 @@
     if(e.target.id==='profileBackOption'){closeModal();tab=profileReturnTab;render();return;}
     if(e.target.id==='doneSetting')closeModal();
     if(e.target.id==='closeConversation'){closeModal();closeChat();}
-    if(e.target.id==='viewProfile'&&current){const id=current;closeModal();$('#mobileChatScreen').classList.remove('open');$('#mobileChatScreen').setAttribute('aria-hidden','true');$('#mobileTabbar').classList.remove('hidden');profileReturnTab='messages';renderProfile(id);}
+    if(e.target.id==='viewProfile'&&current){const id=current;closeModal();profileReturnTab='messages';renderProfile(id);}
   });
   const oldOpenToggle=window.openToggle;
   window.addEventListener('resize',()=>{if(window.innerWidth>750)$('#mobileChatScreen').classList.remove('open');});
