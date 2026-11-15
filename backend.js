@@ -44,6 +44,10 @@
   let desktopReplyTargetId = null;
   let booting = false;
   let signingOut = false;
+  let adminAccess = false;
+  let announcementChannel = null;
+  let announcementExpiryTimer = null;
+  let activeAnnouncement = null;
 
   const showGate = (message = '', success = false) => {
     document.body.classList.remove('xaynet-authenticated');
@@ -98,6 +102,10 @@
   });
   window.XaynetBackend = {
     client,
+    isAdmin: () => adminAccess,
+    getAnnouncement: () => activeAnnouncement,
+    adminSetAnnouncement,
+    adminClearAnnouncement,
     signOut,
     lockCloak,
     sendFriendRequest,
@@ -908,8 +916,67 @@
     await signOut();
   }
 
+
+  function renderSitewideAnnouncement() {
+    let banner = document.getElementById('xaynetGlobalAnnouncement');
+    if (announcementExpiryTimer) clearTimeout(announcementExpiryTimer);
+    announcementExpiryTimer = null;
+    const expiresAt = activeAnnouncement?.expires_at ? new Date(activeAnnouncement.expires_at).getTime() : 0;
+    if (!activeAnnouncement || !activeAnnouncement.message || expiresAt <= Date.now()) {
+      activeAnnouncement = null; banner?.remove(); return;
+    }
+    if (!banner) {
+      banner = document.createElement('aside');
+      banner.id = 'xaynetGlobalAnnouncement'; banner.className = 'xaynet-global-announcement';
+      banner.setAttribute('role', 'status');
+      banner.innerHTML = '<span class="xaynet-global-announcement-mark">X</span><span class="xaynet-global-announcement-copy"></span><button type="button" aria-label="Dismiss announcement">×</button>';
+      document.body.appendChild(banner);
+      banner.querySelector('button').addEventListener('click', () => banner.remove());
+    }
+    banner.querySelector('.xaynet-global-announcement-copy').textContent = activeAnnouncement.message;
+    announcementExpiryTimer = setTimeout(() => { activeAnnouncement = null; banner?.remove(); }, Math.max(0, expiresAt - Date.now()));
+  }
+  async function refreshSitewideAnnouncement() {
+    const { data, error } = await client.from('sitewide_announcement').select('message,expires_at').eq('id', true).maybeSingle();
+    if (error) throw error;
+    activeAnnouncement = data && new Date(data.expires_at).getTime() > Date.now() ? data : null;
+    renderSitewideAnnouncement(); return activeAnnouncement;
+  }
+  async function adminSetAnnouncement(message, durationSeconds) {
+    if (!adminAccess) throw new Error('Admin access required.');
+    const { data, error } = await client.rpc('admin_set_announcement', { p_message: String(message || '').trim(), p_duration_seconds: Number(durationSeconds) });
+    if (error) throw error;
+    await refreshSitewideAnnouncement(); return data;
+  }
+  async function adminClearAnnouncement() {
+    if (!adminAccess) throw new Error('Admin access required.');
+    const { error } = await client.rpc('admin_clear_announcement');
+    if (error) throw error;
+    await refreshSitewideAnnouncement();
+  }
+  async function startAdminFeatures() {
+    const { data, error } = await client.rpc('is_xaynet_admin');
+    if (error) throw error;
+    adminAccess = data === true;
+    await refreshSitewideAnnouncement();
+    if (announcementChannel) await client.removeChannel(announcementChannel);
+    announcementChannel = client.channel('xaynet-sitewide-announcement')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sitewide_announcement' },
+        () => { refreshSitewideAnnouncement().catch(err => console.warn('[Xaynet] Announcement refresh failed:', err)); })
+      .subscribe();
+  }
+  function stopAdminFeatures() {
+    adminAccess = false;
+    if (announcementChannel) client.removeChannel(announcementChannel);
+    announcementChannel = null;
+    if (announcementExpiryTimer) clearTimeout(announcementExpiryTimer);
+    announcementExpiryTimer = null; activeAnnouncement = null;
+    document.getElementById('xaynetGlobalAnnouncement')?.remove();
+  }
+
   async function signOut() {
     signingOut=true;
+    stopAdminFeatures();
     try {
       if(presenceChannel)await presenceChannel.untrack();
       await client.auth.signOut();
@@ -941,6 +1008,7 @@
     authUser=session.user;
     try{
       await loadAllData();
+      await startAdminFeatures();
       await subscribeInbox();
       await subscribePresence();
       hideGate();
