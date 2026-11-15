@@ -38,6 +38,10 @@
   let currentConversations = new Map();
   let currentPeers = new Map();
   let presencePeers = new Set();
+  let desktopFilter = 'online';
+  let desktopSearch = '';
+  let activeDesktopPeerId = null;
+  let desktopReplyTargetId = null;
   let booting = false;
   let signingOut = false;
 
@@ -344,16 +348,128 @@
     if(profileName)profileName.textContent=profile?.display_name||'';
     if(profileStatus)profileStatus.textContent=profile?.status_text||'Online';
     if(profilePic)profilePic.src=profileImage(profile);
+
     const list=$('.dm .friends');
     if(list){
-      list.innerHTML=people.filter(p=>p.friendState==='friend').map(p=>`
-        <div class="f-li" data-desktop-peer="${p.id}">
+      const conversations=people.filter(p=>p.hasConversation);
+      list.innerHTML=conversations.map(p=>`
+        <div class="f-li" data-desktop-peer="${p.id}" data-online="${p.online?'true':'false'}">
           <div class="img-wrapper"><img src="${p.image}" alt=""></div>
-          <p>${escapeHtml(p.name)}</p><i class="fa fa-xmark" data-remove-friend="${p.id}" title="Remove friend"></i>
-        </div>`).join('')||'<p class="desktop-empty">No friends yet.</p>';
-      list.querySelectorAll('[data-desktop-peer]').forEach(el=>el.addEventListener('click',()=>startDm(el.dataset.desktopPeer).catch(err=>console.error(err))));
-      list.querySelectorAll('[data-remove-friend]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();removeFriend(el.dataset.removeFriend).catch(err=>console.error(err));}));
+          <p>${escapeHtml(p.name)}</p>
+          ${p.unread?'<b class="desktop-unread">'+p.unread+'</b>':''}
+        </div>`).join('')||'<p class="desktop-empty">Your conversations will appear here.</p>';
+      list.querySelectorAll('[data-desktop-peer]').forEach(el=>el.addEventListener('click',()=>openDesktopChat(el.dataset.desktopPeer).catch(err=>console.error(err))));
     }
+    const filterButtons=$$('.rightside-area nav .buttons button');
+    const labels=['Online','All','Pending','Blocked','Add Friend'];
+    filterButtons.forEach((button,index)=>{
+      if(index<4){
+        button.dataset.desktopFilter=['online','all','pending','blocked'][index];
+        button.textContent=labels[index];
+        button.classList.toggle('active',desktopFilter===button.dataset.desktopFilter);
+      } else {
+        button.dataset.desktopAddFriend='true';
+        button.textContent='Add Friend';
+      }
+    });
+    if(activeDesktopPeerId){
+      const peer=people.find(p=>p.id===activeDesktopPeerId);
+      if(peer){renderDesktopChat(peer);return;}
+      activeDesktopPeerId=null;
+    }
+    renderDesktopFriends(people);
+  }
+
+  function renderDesktopFriends(people = window.XaynetApp.people) {
+    const host=$('.rightside-area .bottom');
+    if(!host)return;
+    let visible=people.filter(p=>{
+      if(desktopFilter==='pending')return p.friendState==='incoming'||p.friendState==='outgoing';
+      if(desktopFilter==='blocked')return p.friendState==='blocked';
+      if(desktopFilter==='all')return p.friendState==='friend';
+      return p.friendState==='friend'&&p.online;
+    });
+    if(desktopSearch)visible=visible.filter(p=>(p.name+' '+p.handle).toLowerCase().includes(desktopSearch));
+    host.innerHTML=`
+      <section class="desktop-friends-panel">
+        <div class="desktop-page-heading"><div><span>FRIENDS</span><h2>${desktopFilter==='pending'?'Pending Requests':desktopFilter==='blocked'?'Blocked Users':'Your Friends'}</h2></div>
+          <button class="desktop-add-friend" data-desktop-add-friend="true"><i class="fa-solid fa-user-plus"></i> Add Friend</button></div>
+        <div class="desktop-friend-list">
+          ${visible.map(p=>{
+            const action=p.friendState==='incoming'
+              ? '<button data-desktop-accept="'+p.requestId+'">Accept</button><button data-desktop-decline="'+p.requestId+'">Decline</button>'
+              : p.friendState==='outgoing'
+                ? '<button data-desktop-cancel="'+p.requestId+'">Cancel</button>'
+                : p.friendState==='blocked'
+                  ? '<button data-desktop-unblock="'+p.id+'">Unblock</button>'
+                  : '<button data-desktop-chat="'+p.id+'" aria-label="Message"><i class="fa-regular fa-comment"></i></button><button data-desktop-remove="'+p.id+'" aria-label="Remove friend"><i class="fa-solid fa-xmark"></i></button>';
+            return `<article class="desktop-friend-row">
+              <img src="${p.image}" alt="">
+              <div class="desktop-friend-copy"><strong>${escapeHtml(p.name)}</strong><span>@${escapeHtml(p.handle)} · ${escapeHtml(p.status||'Offline')}</span></div>
+              <div class="desktop-friend-actions">${action}</div>
+            </article>`;
+          }).join('')||'<div class="desktop-empty">Nothing to show here yet.</div>'}
+        </div>
+      </section>
+      <aside class="desktop-active-panel"><h2>Active Now</h2><div class="desktop-active-empty"><i class="fa-solid fa-moon"></i><strong>It’s quiet for now...</strong><span>When a friend comes online, they’ll show up here.</span></div>
+        <div class="desktop-online-list">${people.filter(p=>p.friendState==='friend'&&p.online).map(p=>'<div><img src="'+p.image+'" alt=""><span>'+escapeHtml(p.name)+'</span></div>').join('')}</div>
+      </aside>`;
+  }
+
+  async function openDesktopChat(peerId) {
+    activeDesktopPeerId=peerId;
+    const conversationId=await startDm(peerId);
+    const peer=window.XaynetApp.people.find(p=>p.id===peerId);
+    if(peer)renderDesktopChat(peer);
+    await subscribeDm(peerId,conversationId);
+    return conversationId;
+  }
+
+  function renderDesktopChat(peer) {
+    const host=$('.rightside-area .bottom');
+    if(!host||!peer)return;
+    const list=window.XaynetApp.chats[peer.id]||[];
+    host.innerHTML=`
+      <section class="desktop-chat-panel">
+        <header class="desktop-chat-header">
+          <button class="desktop-chat-back" data-desktop-back><i class="fa-solid fa-chevron-left"></i> Friends</button>
+          <img src="${peer.image}" alt="">
+          <div><strong>${escapeHtml(peer.name)}</strong><span>@${escapeHtml(peer.handle||'')}</span></div>
+          <span class="desktop-chat-presence">${peer.online?'Online':'Offline'}</span>
+        </header>
+        <div class="desktop-chat-messages" id="desktopChatMessages">
+          <div class="desktop-chat-intro"><img src="${peer.image}" alt=""><h2>${escapeHtml(peer.name)}</h2><p>This is the beginning of your direct message history with @${escapeHtml(peer.handle||'')}.</p></div>
+          ${list.map(m=>`<article class="desktop-message ${m.author==='me'?'mine':''}">
+            ${m.replyText?'<div class="desktop-reply-quote">'+escapeHtml(m.replyText.slice(0,140))+'</div>':''}
+            <div class="desktop-message-meta"><strong>${m.author==='me'?'You':escapeHtml(peer.name)}</strong><time>${escapeHtml(m.time||'Now')}</time></div>
+            ${m.text?'<p>'+escapeHtml(m.text)+'</p>':''}
+            ${(m.attachments||[]).map(a=>'<a class="chat-attachment" href="'+escapeHtml(a.url||'#')+'" target="_blank" rel="noopener">'+escapeHtml(a.name||'Attachment')+'</a>').join('')}
+            ${(m.reactions||[]).length?'<div class="message-reactions">'+m.reactions.map(r=>'<button data-desktop-react="'+m.id+'" data-emoji="'+escapeHtml(r.emoji)+'">'+escapeHtml(r.emoji)+'</button>').join('')+'</div>':''}
+            <div class="desktop-message-actions"><button data-desktop-reply="${m.id}">Reply</button><button data-desktop-react="${m.id}" data-emoji="👍">👍</button><button data-desktop-react="${m.id}" data-emoji="❤️">❤️</button><button data-desktop-react="${m.id}" data-emoji="😂">😂</button></div>
+          </article>`).join('')}
+        </div>
+        <div class="desktop-typing-indicator" id="desktopTypingIndicator"></div>
+        <div class="desktop-reply-preview" id="desktopReplyPreview" hidden></div>
+        <form class="desktop-composer" id="desktopComposer">
+          <button type="button" id="desktopAttachment" aria-label="Attach file"><i class="fa-solid fa-plus"></i></button>
+          <input id="desktopMessageInput" autocomplete="off" placeholder="Message @${escapeHtml(peer.handle||peer.name)}...">
+          <button type="submit" aria-label="Send"><i class="fa-solid fa-arrow-up"></i></button>
+        </form>
+      </section>`;
+    const messages=$('#desktopChatMessages');
+    if(messages)messages.scrollTop=messages.scrollHeight;
+    $('#desktopComposer')?.addEventListener('submit',event=>{
+      event.preventDefault();
+      const input=$('#desktopMessageInput'),text=input.value.trim();
+      if(!text)return;
+      sendMessage(peer.id,text).then(()=>{input.value='';}).catch(error=>openDesktopModal('Message failed','<p>'+escapeHtml(error.message||'Could not send the message.')+'</p>'));
+    });
+    $('#desktopMessageInput')?.addEventListener('input',event=>{
+      clearTimeout(typingStopTimer);
+      sendTyping(peer.id,!!event.target.value).catch(()=>{});
+      typingStopTimer=setTimeout(()=>sendTyping(peer.id,false).catch(()=>{}),1300);
+    });
+    $('#desktopAttachment')?.addEventListener('click',pickAttachment);
   }
 
   async function refreshDesktop() {
@@ -433,6 +549,7 @@
     const peer=app.people.find(p=>p.id===peerId);
     if(peer){peer.conversationId=conversationId;peer.hasConversation=true;}
     if(app.currentPeerId===peerId)app.renderChat();
+    if(activeDesktopPeerId===peerId)renderDesktopChat(currentPeers.get(peerId)||app.people.find(p=>p.id===peerId));
     app.render();
     await markRead(conversationId);
   }
@@ -476,30 +593,31 @@
       const {error:addError}=await client.from('message_reactions').insert({message_id:messageId,user_id:authUser.id,emoji});
       if(addError)throw addError;
     }
-    const peerId=window.XaynetApp.currentPeerId;
+    const peerId=window.XaynetApp.currentPeerId||activeDesktopPeerId;
     if(peerId){
-      const peer=currentPeers.get(peerId);
+      const peer=currentPeers.get(peerId)||window.XaynetApp.people.find(p=>p.id===peerId);
       if(peer?.conversationId)await loadConversation(peerId,peer.conversationId);
     }
   }
 
   function setReplyTarget(messageId) {
-    const peerId=window.XaynetApp.currentPeerId;
+    const peerId=window.XaynetApp.currentPeerId||activeDesktopPeerId;
     const message=(window.XaynetApp.chats[peerId]||[]).find(m=>m.id===messageId);
     if(!message)return;
     replyTargetId=messageId;
-    const preview=$('#mobileReplyPreview');
-    if(preview){
-      preview.hidden=false;
-      preview.innerHTML='<span>Replying to '+(message.author==='me'?'yourself':'message')+': '+escapeHtml(message.text.slice(0,110))+'</span><button type="button" id="clearReplyPreview" aria-label="Cancel reply">×</button>';
-      $('#clearReplyPreview').onclick=clearReplyPreview;
-    }
-    $('#mobileMessageInput')?.focus();
+    const html='<span>Replying to '+(message.author==='me'?'yourself':'message')+': '+escapeHtml((message.text||'Attachment').slice(0,110))+'</span><button type="button" class="clear-reply" aria-label="Cancel reply">×</button>';
+    ['#mobileReplyPreview','#desktopReplyPreview'].forEach(selector=>{
+      const preview=$(selector);
+      if(preview){preview.hidden=false;preview.innerHTML=html;preview.querySelector('.clear-reply').onclick=clearReplyPreview;}
+    });
+    ($('#mobileMessageInput')||$('#desktopMessageInput'))?.focus();
   }
   function clearReplyPreview() {
     replyTargetId=null;
-    const preview=$('#mobileReplyPreview');
-    if(preview){preview.hidden=true;preview.innerHTML='';}
+    ['#mobileReplyPreview','#desktopReplyPreview'].forEach(selector=>{
+      const preview=$(selector);
+      if(preview){preview.hidden=true;preview.innerHTML='';}
+    });
   }
 
   async function sendFriendRequest(handleValue) {
@@ -574,11 +692,11 @@
     await loadAllData();
     if(!data)return;
     if(data.kind==='friend_request'){
-      app.setTab('friends');
-      app.setFilter?.('pending');
+      if(window.innerWidth>750){desktopFilter='pending';activeDesktopPeerId=null;renderDesktopFriends(app.people);}
+      else {app.setTab('friends');app.setFilter?.('pending');}
     } else if(data.kind==='dm_message' && data.actor_id) {
-      await startDm(data.actor_id);
-      app.openChat(data.actor_id);
+      if(window.innerWidth>750)await openDesktopChat(data.actor_id);
+      else {await startDm(data.actor_id);app.openChat(data.actor_id);}
     } else {
       app.setTab('friends');
     }
@@ -639,13 +757,10 @@
   }
 
   function setTypingIndicator(text) {
-    const target=$('#mobileTypingIndicator');
-    if(!target)return;
-    target.innerHTML=text
-      ? escapeHtml(text)+' <span class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>'
-      : '';
+    const html=text?escapeHtml(text)+' <span class="typing-dots" aria-hidden="true"><i></i><i></i><i></i></span>':'';
+    ['#mobileTypingIndicator','#desktopTypingIndicator'].forEach(selector=>{const target=$(selector);if(target)target.innerHTML=html;});
     clearTimeout(currentTypingTimer);
-    if(text)currentTypingTimer=setTimeout(()=>{target.textContent='';},3500);
+    if(text)currentTypingTimer=setTimeout(()=>{['#mobileTypingIndicator','#desktopTypingIndicator'].forEach(selector=>{const target=$(selector);if(target)target.textContent='';});},3500);
   }
 
   async function sendTyping(peerId, typing) {
@@ -768,6 +883,72 @@
   $('#mobileCall')?.addEventListener('click',event=>{
     event.preventDefault();
     window.XaynetApp.openModal('Voice calls','<p class="modal-description">Voice calling needs the WebRTC media layer and call permissions to be configured before it can be enabled.</p><button class="modal-primary" id="doneSetting">Okay</button>');
+  });
+
+  function openDesktopModal(title, body) {
+    const old=$('.desktop-modal-backdrop');
+    if(old)old.remove();
+    const overlay=document.createElement('div');
+    overlay.className='desktop-modal-backdrop';
+    overlay.innerHTML='<section class="desktop-modal"><header><strong>'+escapeHtml(title)+'</strong><button type="button" data-desktop-modal-close aria-label="Close">×</button></header><div class="desktop-modal-body">'+body+'</div></section>';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click',e=>{if(e.target===overlay||e.target.closest('[data-desktop-modal-close]'))overlay.remove();});
+    return overlay;
+  }
+
+  function desktopAddFriendModal() {
+    const overlay=openDesktopModal('Add Friend','<p>Send a request using their handle.</p><input id="desktopFriendHandle" placeholder="handle"><button id="desktopSendFriendRequest">Send Friend Request</button><p id="desktopFriendFeedback"></p>');
+    $('#desktopSendFriendRequest',overlay).onclick=async()=>{
+      const feedback=$('#desktopFriendFeedback',overlay);
+      try{await sendFriendRequest($('#desktopFriendHandle',overlay).value);feedback.textContent='Friend request sent.';feedback.classList.add('success');}
+      catch(err){feedback.textContent=err.message||'Could not send request.';}
+    };
+  }
+
+  $('.rightside-area')?.addEventListener('click',async event=>{
+    const filter=event.target.closest('[data-desktop-filter]');
+    const addFriend=event.target.closest('[data-desktop-add-friend]');
+    const chat=event.target.closest('[data-desktop-chat]');
+    const back=event.target.closest('[data-desktop-back]');
+    const accept=event.target.closest('[data-desktop-accept]');
+    const decline=event.target.closest('[data-desktop-decline]');
+    const cancel=event.target.closest('[data-desktop-cancel]');
+    const unblock=event.target.closest('[data-desktop-unblock]');
+    const remove=event.target.closest('[data-desktop-remove]');
+    const reply=event.target.closest('[data-desktop-reply]');
+    const react=event.target.closest('[data-desktop-react]');
+    try{
+      if(filter){desktopFilter=filter.dataset.desktopFilter;activeDesktopPeerId=null;renderDesktopFriends();$('.rightside-area nav .buttons').querySelectorAll('[data-desktop-filter]').forEach(b=>b.classList.toggle('active',b.dataset.desktopFilter===desktopFilter));}
+      if(addFriend)desktopAddFriendModal();
+      if(chat)await openDesktopChat(chat.dataset.desktopChat);
+      if(back){activeDesktopPeerId=null;clearReplyPreview();renderDesktopFriends();}
+      if(accept)await respondFriendRequest(accept.dataset.desktopAccept,true);
+      if(decline)await respondFriendRequest(decline.dataset.desktopDecline,false);
+      if(cancel)await cancelFriendRequest(cancel.dataset.desktopCancel);
+      if(unblock)await unblockUser(unblock.dataset.desktopUnblock);
+      if(remove)await removeFriend(remove.dataset.desktopRemove);
+      if(reply)setReplyTarget(reply.dataset.desktopReply);
+      if(react)await toggleReaction(react.dataset.desktopReact,react.dataset.emoji);
+    }catch(err){openDesktopModal('Action failed','<p>'+escapeHtml(err.message||'Please try again.')+'</p>');}
+  });
+
+  $('.top-nav input')?.addEventListener('input',event=>{
+    const value=event.target.value.trim().toLowerCase();
+    desktopSearch=value;
+    $('.dm .friends')?.querySelectorAll('.f-li').forEach(row=>{row.style.display=row.textContent.toLowerCase().includes(value)?'':'none';});
+    if(window.innerWidth>750 && value.startsWith('@')){
+      const exact=window.XaynetApp.people.find(p=>p.handle===value.slice(1));
+      if(exact && !exact.hasConversation)rowHint();
+    }
+  });
+  function rowHint(){/* reserved for future account discovery keyboard navigation */}
+  $('.rightside-area nav .icons-end i.fa-inbox')?.addEventListener('click',()=>{
+    const rows=(window.XaynetApp.people||[]).filter(p=>p.unread>0);
+    openDesktopModal('Inbox',rows.map(p=>'<button class="desktop-inbox-row" data-desktop-chat="'+p.id+'"><img src="'+p.image+'" alt=""><span>'+escapeHtml(p.name)+' sent you a message</span></button>').join('')||'<p>You are all caught up.</p>');
+  });
+  $('.sidebar-chat .profile .right i.fa-gear')?.addEventListener('click',()=>{
+    const overlay=openDesktopModal('Account settings','<p>Signed in as <strong>@'+escapeHtml(profile?.handle||'')+'</strong></p><button id="desktopSignOut">Sign Out</button>');
+    $('#desktopSignOut',overlay).onclick=()=>{overlay.remove();signOut();};
   });
 
   document.addEventListener('visibilitychange',()=>{
