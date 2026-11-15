@@ -119,9 +119,9 @@
       if (filter === 'all') return p.friendState === 'friend';
       return p.friendState === 'friend' && p.online;
     });
-    const incoming = visible.filter(p => p.friendState === 'incoming').length;
+    const incoming = people.filter(p => p.friendState === 'incoming').length;
     $('#mobileContent').innerHTML=`
-      <div class="mobile-friend-tabs">${['online','all','pending','blocked'].map(f=>`<button data-filter="${f}" class="${filter===f?'selected':''}">${f[0].toUpperCase()+f.slice(1)}${f==='pending'&&incoming?'<span class="mobile-pending-count"> ('+incoming+')</span>':''}</button>`).join('')}<button class="add-friend-btn" id="addFriend">Add Friend</button></div>
+      <div class="mobile-friend-tabs">${['online','all','pending','blocked'].map(f=>`<button data-filter="${f}" class="${filter===f?'selected':''}">${f[0].toUpperCase()+f.slice(1)}${f==='pending'?'<span class="mobile-pending-count"> ('+incoming+')</span>':''}</button>`).join('')}<button class="add-friend-btn" id="addFriend">Add Friend</button></div>
       <div class="mobile-section-label"><span>${filter==='online'?'ONLINE — '+visible.length:filter.toUpperCase()+' — '+visible.length}</span></div>
       <div class="mobile-dm-list">${visible.map(p=>{
         const actions = p.friendState==='incoming'
@@ -135,15 +135,7 @@
       }).join('')||'<p class="mobile-empty">Nothing to show here yet.</p>'}</div>`;
     $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderFriends();});
     $$('[data-chat]').forEach(b=>b.onclick=e=>{e.stopPropagation();openChat(b.dataset.chat);});
-    $$('[data-open-profile]').forEach(b=>b.onclick=e=>{if(e.target.closest('.friend-actions'))return;profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
-    $('#sendFriendRequest').onclick=async()=> {
-      const handle=$('#friendUsername').value.trim();
-      const feedback=$('#friendFeedback');
-      try {
-        await window.XaynetBackend.sendFriendRequest(handle);
-        feedback.textContent='Friend request sent.';
-      } catch (err) { feedback.textContent=err.message||'Could not send friend request.'; }
-    };
+    $('[data-open-profile]').forEach(b=>b.onclick=e=>{if(e.target.closest('.friend-actions'))return;profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
   };
   const renderActivity = () => {
     setHeader('Activity','Your notifications');
@@ -165,7 +157,7 @@
     const connection=self?'<div class="profile-connection"><span class="profile-connection-icon"><i class="fa-brands fa-discord"></i></span><div><strong>Account</strong><span>@'+esc(p.handle||'')+'</span></div></div>':'<div class="profile-no-connections">Connection details unavailable</div>';
     const pics=friends.slice(0,5).map(x=>'<img src="'+x.image+'" alt="'+esc(x.name)+'">').join('');
     const profileMarkup='<section class="mobile-profile-page" data-profile-id="'+p.id+'"><div class="profile-utility-row">'+(self?'':'<button class="profile-back-button" id="profileBack" aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>')+'<span class="profile-presence-label"><i></i> '+(p.online?'ONLINE NOW':esc(p.status).toUpperCase())+'</span><div class="profile-quick-actions"><span class="profile-quick-pill">'+(self?'MY PROFILE':'PROFILE')+'</span><button id="profileMore"><i class="fa-solid fa-ellipsis"></i></button></div></div>'+
-      '<section class="profile-hero-card"><div class="profile-banner"'+(p.banner?' style="background-image:url(\''+esc(p.banner)+'\')"' : '')+'><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><div class="profile-identity"><strong>'+esc(p.name)+'</strong><span>@'+esc(p.handle||'')+'</span></div><div class="profile-actions"><button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button><button id="'+(self?'editProfile':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':'fa-user-plus')+'"></i> '+(self?'Edit Profile':'Add Friend')+'</button></div></div></section>'+
+      '<section class="profile-hero-card"><div class="profile-banner"'+(p.banner?' style="background-image:url(\''+esc(p.banner)+'\')"' : '')+'><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><div class="profile-identity"><strong>'+esc(p.name)+'</strong><span>@'+esc(p.handle||'')+'</span></div><div class="profile-actions">'+(self?'':p.friendState==='friend'?'<button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button>':'')+'<button id="'+(self?'editProfile':p.friendState==='friend'?'profileFriendStatus':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':p.friendState==='friend'?'fa-user-check':'fa-user-plus')+'"></i> '+(self?'Edit Profile':p.friendState==='friend'?'Friends':'Add Friend')+'</button></div></div></section>'+
       '<section class="profile-info-card"><div class="profile-card-heading">MEMBER SINCE</div><div class="profile-member-date"><i class="fa-regular fa-calendar"></i><span>'+(p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'}):'Recently joined')+'</span></div></section><section class="profile-info-card"><div class="profile-card-heading">CONNECTIONS</div>'+connection+'</section>'+
       '<button class="profile-info-card profile-friends-card" id="profileFriends"><span class="profile-card-heading">FRIENDS <small>'+friends.length+'</small></span><span class="profile-friends-row"><span class="profile-friend-stack">'+pics+'</span><i class="fa-solid fa-chevron-right"></i></span></button></section>';
     if(self) {
@@ -186,8 +178,9 @@
       grab.addEventListener('pointercancel',finishDrag);
     }
     const edit=()=>{openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Profile picture</label><input class="modal-input" id="profileAvatarFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><label class="modal-label">Banner</label><input class="modal-input" id="profileBannerFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" maxlength="40" value="'+esc(p.name||'')+'"><label class="modal-label">Username</label><input class="modal-input" id="profileHandleInput" maxlength="24" value="'+esc(p.handle||'')+'" disabled><label class="modal-label">About me</label><textarea class="modal-input" id="profileBioInput" rows="3" maxlength="190">'+esc(p.bio||'')+'</textarea><button class="modal-primary" id="saveProfile">Save Changes</button><p class="modal-feedback" id="profileFeedback"></p>');$('#saveProfile').onclick=async()=>{const feedback=$('#profileFeedback'),button=$('#saveProfile');try{button.disabled=true;button.textContent='Saving…';const avatarFile=$('#profileAvatarFile').files[0],bannerFile=$('#profileBannerFile').files[0];if(avatarFile)await window.XaynetBackend.uploadProfileMedia('avatar',avatarFile);if(bannerFile)await window.XaynetBackend.uploadProfileMedia('banner',bannerFile);await window.XaynetBackend.updateProfile({display_name:$('#profileNameInput').value,bio:$('#profileBioInput').value});closeModal();}catch(err){feedback.textContent=err.message||'Could not save profile.';button.disabled=false;button.textContent='Save Changes';}};};
-    $('#profileMessage').onclick=()=>{if(self){tab='messages';render();}else{closeProfileSheet();window.XaynetBackend.startDm(p.id).then(()=>openChat(p.id)).catch(err=>openModal('Could not open message','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>'));}};
-    if(self)$('#editProfile').onclick=edit; else $('#profileAddFriend').onclick=async()=>{try{await window.XaynetBackend.sendFriendRequest(p.handle);closeProfileSheet();}catch(err){openModal('Friend request','<p class="modal-description">'+esc(err.message||'Could not send request.')+'</p><button class="modal-primary" id="doneSetting">Okay</button>');}};
+    if($('#profileMessage'))$('#profileMessage').onclick=()=>{closeProfileSheet();window.XaynetBackend.startDm(p.id).then(()=>openChat(p.id)).catch(err=>openModal('Could not open message','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>'));};
+    if(self)$('#editProfile').onclick=edit;
+    else if(p.friendState!=='friend')$('#profileAddFriend').onclick=async()=>{try{await window.XaynetBackend.sendFriendRequest(p.handle);closeProfileSheet();}catch(err){openModal('Friend request','<p class="modal-description">'+esc(err.message||'Could not send request.')+'</p><button class="modal-primary" id="doneSetting">Okay</button>');}};
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
     $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button><button class="modal-list-action" id="profileSignOut">Sign Out</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
     if(!self)$('#profileBack').onclick=closeProfileSheet;
