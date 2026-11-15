@@ -3,6 +3,7 @@
   const LOCK_KEY='xaynet-cloak-locked';
   const TIMEOUT_KEY='xaynet-cloak-timeout';
   const $=(s,r=document)=>r.querySelector(s);
+  const $=(s,r=document)=>Array.from(r.querySelectorAll(s));
   const gate=$('#authGate');
   const panel=$('.auth-panel',gate);
   const locked=()=>{try{return localStorage.getItem(LOCK_KEY)==='1';}catch{return false;}};
@@ -81,7 +82,6 @@
   if(gate)observer.observe(gate,{attributes:true,attributeFilter:['class']});
   setLockedAppearance();
   document.addEventListener('DOMContentLoaded',setLockedAppearance);
-  setInterval(()=>{if(document.body.classList.contains('xaynet-authenticated'))resetTimer();},30000);
 
   function startSnake(){
     const canvas=$('#cloakSnakeCanvas');
@@ -111,12 +111,12 @@
     const key=e=>{const map={ArrowUp:{x:0,y:-1},w:{x:0,y:-1},ArrowDown:{x:0,y:1},s:{x:0,y:1},ArrowLeft:{x:-1,y:0},a:{x:-1,y:0},ArrowRight:{x:1,y:0},d:{x:1,y:0}};if(map[e.key]){e.preventDefault();setDir(map[e.key]);}};
     document.addEventListener('keydown',key);
     const controls=$$('#cloakGamePad button');
-    controls.forEach(b=>b.addEventListener('click',()=>setDir(JSON.parse(b.dataset.dir))));
+    controls.forEach(b=>b.onclick=()=>setDir(JSON.parse(b.dataset.dir)));
     const restart=()=>{snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}];dir=next={x:1,y:0};score=0;dead=false;placeFood();draw();};
-    start?.addEventListener('click',restart);
+    if(start)start.onclick=restart;
     let touch=null;
-    canvas.addEventListener('pointerdown',e=>{touch={x:e.clientX,y:e.clientY};});
-    canvas.addEventListener('pointerup',e=>{if(!touch)return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y;if(Math.abs(dx)>Math.abs(dy))setDir({x:Math.sign(dx),y:0});else setDir({x:0,y:Math.sign(dy)});touch=null;});
+    canvas.onpointerdown=e=>{touch={x:e.clientX,y:e.clientY};};
+    canvas.onpointerup=e=>{if(!touch)return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y;if(Math.abs(dx)>Math.abs(dy))setDir({x:Math.sign(dx),y:0});else setDir({x:0,y:Math.sign(dy)});touch=null;};
     draw();gameTimer=setInterval(step,145);
     canvas._cloakCleanup=()=>document.removeEventListener('keydown',key);
   }
