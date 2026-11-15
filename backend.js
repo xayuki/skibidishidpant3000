@@ -50,6 +50,20 @@
   let activeAnnouncement = null;
   const attachmentUrlCache = new Map();
 
+  async function refreshAttachmentUrl(path) {
+    if (!authUser || !path) throw new Error('Sign in to load this attachment.');
+    attachmentUrlCache.delete(path);
+    const storage=client.storage.from('chat-attachments');
+    const {data:signed,error}=await storage.createSignedUrl(path,3600);
+    if(error)throw error;
+    if(!signed?.signedUrl)throw new Error('Could not create an attachment link.');
+    const {data:download,error:downloadError}=await storage.createSignedUrl(path,3600,{download:true});
+    const result={url:signed.signedUrl,downloadUrl:download?.signedUrl||signed.signedUrl,expiresAt:Date.now()+50*60*1000};
+    attachmentUrlCache.set(path,result);
+    if(downloadError)console.warn('[Xaynet] Download link refresh failed:',downloadError.message);
+    return result;
+  }
+
   const showGate = (message = '', success = false) => {
     document.body.classList.remove('xaynet-authenticated');
     if (gate) gate.classList.remove('is-hidden');
@@ -127,7 +141,8 @@
     openNotification,
     clearActivity,
     saveTheme,
-    pickAttachment
+    pickAttachment,
+    refreshAttachmentUrl
   };
 
   modeToggle?.addEventListener('click', () => setMode(authMode === 'signup' ? 'signin' : 'signup'));
@@ -567,10 +582,8 @@
       for(const file of (m.attachments||[])){
         let cached=attachmentUrlCache.get(file.path);
         if(!cached || cached.expiresAt<Date.now()){
-          const storage=client.storage.from('chat-attachments');
-          const [{data:signed},{data:download}] = await Promise.all([storage.createSignedUrl(file.path,3600),storage.createSignedUrl(file.path,3600,{download:file.name||true})]);
-          cached={url:signed?.signedUrl||'#',downloadUrl:download?.signedUrl||signed?.signedUrl||'#',expiresAt:Date.now()+50*60*1000};
-          attachmentUrlCache.set(file.path,cached);
+          try { cached=await refreshAttachmentUrl(file.path); }
+          catch(error) { console.warn('[Xaynet] Could not sign attachment URL:',file.path,error.message); cached={url:'#',downloadUrl:'#',expiresAt:0}; }
         }
         attachments.push({...file,url:cached.url,downloadUrl:cached.downloadUrl});
       }
