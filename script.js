@@ -196,7 +196,7 @@
     };
     else $('#profileAddFriend').onclick=async()=>{try{await window.XaynetBackend.sendFriendRequest(p.handle);closeProfileSheet();}catch(err){openModal('Friend request','<p class="modal-description">'+esc(err.message||'Could not send request.')+'</p><button class="modal-primary" id="doneSetting">Okay</button>');}};
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
-    $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button><button class="modal-list-action" id="profileCloakSettings">Cloak Settings</button>'+((["39aafa7c-9d05-4746-a221-86bb48dc8eb8","6b6a2529-532f-471a-a80c-71a56477334b"]).includes(currentUserProfile?.id)?'<button class="modal-list-action" id="profileAdminPanel">Admin Panel</button>':'')+'<button class="modal-list-action" id="profileSignOut">Sign Out</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
+    $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button><button class="modal-list-action" id="profileCloakSettings">Cloak Settings</button>'+(window.XaynetBackend?.isAdmin?.()?'<button class="modal-list-action" id="profileAdminPanel">Admin Panel</button>':'')+'<button class="modal-list-action" id="profileSignOut">Sign Out</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
     if(!self)$('#profileBack').onclick=closeProfileSheet;
   };
   const renderAppearance = () => {
@@ -426,7 +426,29 @@
     if(e.target.id==='profileCloakSettings'){closeModal();window.XaynetCloak?.openSettings();return;}
     if(e.target.id==='profileAdminPanel'){
       closeModal();
-      openModal('Admin Panel','<p class="modal-description">Temporary server-wide controls for XAYNET.</p><div class="admin-panel-placeholder"><strong>No controls enabled yet</strong><span>Choose the temporary effects you want here before they are connected to server-side admin actions.</span></div>');
+      if(!window.XaynetBackend?.isAdmin?.()){openModal('Admin access required','<p class="modal-description">This account is not authorized to use server controls.</p>');return;}
+      openModal('Admin Panel',
+        '<p class="modal-description">Temporary controls for the actual XAYNET platform. Changes are stored server-side and appear for everyone online.</p>'+
+        '<div class="xaynet-admin-section"><div class="xaynet-admin-section-head"><strong>Sitewide announcement</strong><span>Expires automatically</span></div>'+
+        '<textarea class="modal-input xaynet-admin-message" id="adminAnnouncementMessage" maxlength="220" rows="3" placeholder="e.g. xaynet is now legally owned by a raccoon."></textarea>'+
+        '<label class="modal-label" for="adminAnnouncementDuration">Show for</label><select class="modal-input" id="adminAnnouncementDuration"><option value="60">1 minute</option><option value="300" selected>5 minutes</option><option value="600">10 minutes</option></select>'+
+        '<button class="modal-primary" id="adminPublishAnnouncement">Broadcast to XAYNET</button><button class="modal-list-action" id="adminClearAnnouncement">Clear active announcement</button>'+
+        '<p class="modal-feedback" id="adminAnnouncementFeedback" role="status"></p><p class="xaynet-admin-current" id="adminAnnouncementCurrent">Checking active announcement…</p></div>');
+      const feedback=$('#adminAnnouncementFeedback'),current=$('#adminAnnouncementCurrent');
+      const refreshAdminStatus=()=>{const active=window.XaynetBackend.getAnnouncement();current.textContent=active?('Live now: “'+active.message+'” · expires '+new Date(active.expires_at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})):'No active announcement.';};
+      refreshAdminStatus();
+      $('#adminPublishAnnouncement').onclick=async()=>{
+        const button=$('#adminPublishAnnouncement');
+        try{button.disabled=true;button.textContent='Broadcasting…';await window.XaynetBackend.adminSetAnnouncement($('#adminAnnouncementMessage').value,$('#adminAnnouncementDuration').value);feedback.textContent='Live across XAYNET.';feedback.classList.add('success');refreshAdminStatus();$('#adminAnnouncementMessage').value='';}
+        catch(err){feedback.textContent=err.message||'Could not publish announcement.';feedback.classList.remove('success');}
+        finally{button.disabled=false;button.textContent='Broadcast to XAYNET';}
+      };
+      $('#adminClearAnnouncement').onclick=async()=>{
+        const button=$('#adminClearAnnouncement');
+        try{button.disabled=true;await window.XaynetBackend.adminClearAnnouncement();feedback.textContent='Announcement cleared for everyone.';feedback.classList.add('success');refreshAdminStatus();}
+        catch(err){feedback.textContent=err.message||'Could not clear announcement.';feedback.classList.remove('success');}
+        finally{button.disabled=false;}
+      };
       return;
     }
     if(e.target.id==='profileSignOut'){closeModal();window.XaynetBackend.signOut();return;}
