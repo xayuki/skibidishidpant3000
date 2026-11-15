@@ -2019,3 +2019,27 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 .chat-profile-avatar{width:68px;height:68px}
 .desktop-chat-header>img{width:32px;height:32px}
 .mobile-top-action[hidden]{display:none}
+
+
+/* Compact reply UI: keep context readable without creating a second message block. */
+.mobile-reply-preview,.desktop-reply-preview{
+  display:flex;align-items:center;gap:7px;min-width:0;min-height:30px;
+  margin:0 12px 5px;padding:3px 8px;border:0;border-left:2px solid #777;
+  border-radius:0;background:transparent;color:#a0a0a0;font-size:10px;line-height:16px;
+}
+.mobile-reply-preview[hidden],.desktop-reply-preview[hidden]{display:none}
+.reply-preview-label{flex:0 0 auto;color:#d0d0d0;font-size:10px;font-weight:700;white-space:nowrap}
+.reply-preview-text{display:block;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#858585;font-size:10px}
+.mobile-reply-preview .clear-reply,.desktop-reply-preview .clear-reply{
+  flex:0 0 22px;width:22px;height:22px;display:grid;place-items:center;
+  padding:0;border:0;border-radius:50%;background:transparent;color:#888;font-size:16px;line-height:1;cursor:pointer
+}
+.mobile-reply-preview .clear-reply:hover,.desktop-reply-preview .clear-reply:hover{background:#1b1b1b;color:#fff}
+.chat-message .chat-reply-quote{
+  display:flex;align-items:center;gap:5px;width:auto;max-width:100%;min-width:0;
+  margin:0 0 2px;padding:0;border:0;background:transparent;
+  color:#777;font-size:10px;line-height:14px;white-space:nowrap;overflow:hidden
+}
+.chat-message .chat-reply-quote>span:last-child{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reply-context-arrow{flex:0 0 auto;color:#777;font-size:12px}
+@media(max-width:520px){.mobile-reply-preview{margin:0 10px 4px;padding:2px 7px;min-height:27px}}
