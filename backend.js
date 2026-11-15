@@ -899,6 +899,12 @@
       localStorage.removeItem('skibidi-chats');
     } catch {}
     window.XaynetApp?.closeChat?.();
+    document.querySelectorAll('.chat-message').forEach(node=>node.remove());
+    const messageList=document.querySelector('#mobileChatMessages');if(messageList)messageList.replaceChildren();
+    const mobileContent=document.querySelector('#mobileContent');if(mobileContent)mobileContent.replaceChildren();
+    document.querySelector('.mobile-profile-sheet-backdrop')?.remove();
+    document.querySelector('.desktop-modal-backdrop')?.remove();
+    document.querySelector('#mobileModalBackdrop')?.classList.remove('show');
     await signOut();
   }
 
