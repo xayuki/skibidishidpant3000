@@ -136,7 +136,6 @@
     $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderFriends();});
     $$('[data-chat]').forEach(b=>b.onclick=e=>{e.stopPropagation();openChat(b.dataset.chat);});
     $$('[data-open-profile]').forEach(b=>b.onclick=e=>{if(e.target.closest('.friend-actions'))return;profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
-    $('#addFriend').onclick=()=>openModal('Add Friend',`<p class="modal-description">Add someone with their handle.</p><input class="modal-input" id="friendUsername" placeholder="Enter a handle"><button class="modal-primary" id="sendFriendRequest">Send Friend Request</button><p class="modal-feedback" id="friendFeedback"></p>`);
     $('#sendFriendRequest').onclick=async()=> {
       const handle=$('#friendUsername').value.trim();
       const feedback=$('#friendFeedback');
@@ -321,6 +320,25 @@
   $('#composerEmoji').onclick=()=>{$('#mobileMessageInput').value+=' 🙂 ';$('#mobileMessageInput').focus();};
   $('#mobileModalBackdrop').addEventListener('click',e=>{if(e.target.id==='mobileModalBackdrop')closeModal();});
   $('#mobileContent').addEventListener('click',async e=>{
+    const addFriendButton=e.target.closest('#addFriend');
+    if(addFriendButton){
+      e.preventDefault();
+      openModal('Add Friend',`<p class="modal-description">Add someone with their handle.</p><input class="modal-input" id="friendUsername" placeholder="Enter a handle" autocomplete="off"><button class="modal-primary" id="sendFriendRequest">Send Friend Request</button><p class="modal-feedback" id="friendFeedback"></p>`);
+      $('#sendFriendRequest').onclick=async()=>{
+        const handle=$('#friendUsername').value.trim(), feedback=$('#friendFeedback'), button=$('#sendFriendRequest');
+        if(!handle){feedback.textContent='Enter a username first.';return;}
+        try{
+          button.disabled=true;button.textContent='Sending…';
+          await window.XaynetBackend.sendFriendRequest(handle);
+          feedback.textContent='Friend request sent.';
+          button.textContent='Sent';
+        }catch(err){
+          feedback.textContent=err.message||'Could not send friend request.';
+          button.disabled=false;button.textContent='Send Friend Request';
+        }
+      };
+      return;
+    }
     const accept=e.target.closest('[data-accept-request]');
     const decline=e.target.closest('[data-decline-request]');
     const cancel=e.target.closest('[data-cancel-request]');
