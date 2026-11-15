@@ -149,7 +149,7 @@
     const client=window.XaynetBackend?.client;if(!client||!id)return;
     if(channel)await client.removeChannel(channel);
     userId=id;
-    channel=client.channel('call-signals:'+id)
+    channel=client.channel('call-signals:'+id,{config:{private:true}})
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'call_signals',filter:'recipient_id=eq.'+id},payload=>handleSignal(payload.new))
       .subscribe(async status=>{if(status==='SUBSCRIBED'){const {data}=await client.from('call_signals').select('*').eq('recipient_id',id).gte('created_at',new Date(Date.now()-120000).toISOString()).order('created_at');for(const row of data||[])handleSignal(row);}});
   };
