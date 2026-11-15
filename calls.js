@@ -2,7 +2,7 @@
   'use strict';
   const $ = (s, r=document) => r.querySelector(s);
   const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  let channel=null, userId=null, call=null, pendingOffer=null, seen=new Set();
+  let channel=null, userId=null, call=null, pendingOffer=null, pendingIce=[], seen=new Set();
   const ICE_SERVERS=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}];
   const root=document.createElement('section');
   root.id='xayCallDock';root.className='xay-call-dock';root.hidden=true;
@@ -86,7 +86,7 @@
     try{
       if(row.kind==='offer'){
         if(call){try{await window.XaynetBackend.client.from('call_signals').insert({call_id:row.call_id,conversation_id:row.conversation_id,sender_id:userId,recipient_id:row.sender_id,kind:'busy',payload:{}});}catch{}return;}
-        pendingOffer=row;
+        pendingOffer=row;pendingIce=[];
         const peer=window.XaynetApp?.people?.find(p=>p.id===row.sender_id);
         show(peer?.name||'Incoming call',data.mode||'audio');
         status('Incoming '+(data.mode==='video'?'video':'voice')+' call');
@@ -94,6 +94,7 @@
         $('#xayIncomingText').textContent=(peer?.name||'Someone')+' is calling';
         return;
       }
+      if(row.kind==='ice'&&!call&&pendingOffer&&row.call_id===pendingOffer.call_id){pendingIce.push(data);return;}
       if(!call||row.call_id!==call.id)return;
       if(row.kind==='answer'){
         await call.pc.setRemoteDescription(new RTCSessionDescription(data));
@@ -127,7 +128,7 @@
   const accept=async()=>{
     const row=pendingOffer;if(!row)return;
     const data=row.payload||{},peer=window.XaynetApp?.people?.find(p=>p.id===row.sender_id);
-    call={id:row.call_id,peerId:row.sender_id,conversationId:row.conversation_id,mode:data.mode||'audio',pc:null,stream:null,signalReady:false,localCandidates:[],remoteCandidates:[]};
+    call={id:row.call_id,peerId:row.sender_id,conversationId:row.conversation_id,mode:data.mode||'audio',pc:null,stream:null,signalReady:false,localCandidates:[],remoteCandidates:pendingIce.splice(0)};
     pendingOffer=null;show(peer?.name||'Call',call.mode);$('#xayCallIncoming').hidden=true;$('#xayCallControls').hidden=false;
     try{
       makePeerConnection();await acquireMedia(call.mode);
