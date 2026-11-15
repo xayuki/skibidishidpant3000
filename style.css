@@ -895,6 +895,8 @@ aside .icon i { background-color: #111; }
   .mobile-tab i { font-size:19px; }
   .mobile-tab.active { color:#f2f3f5; background:#171717; }
   .mobile-tab-dot { position:absolute; top:4px; right:calc(50% - 15px); width:7px; height:7px; border-radius:50%; background:#ed4245; }
+.mobile-friends-dot,.mobile-message-dot{position:absolute;top:4px;right:calc(50% - 15px);width:7px;height:7px;border-radius:50%;background:#ed4245}
+.mobile-tab-dot[hidden],.mobile-friends-dot[hidden],.mobile-message-dot[hidden]{display:none}
 
   /* DM inbox */
   .mobile-search {
