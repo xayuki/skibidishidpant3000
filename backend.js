@@ -46,13 +46,14 @@
   let signingOut = false;
 
   const showGate = (message = '', success = false) => {
+    document.body.classList.remove('xaynet-authenticated');
     if (gate) gate.classList.remove('is-hidden');
     if (feedback) {
       feedback.textContent = message;
       feedback.classList.toggle('success', success);
     }
   };
-  const hideGate = () => gate?.classList.add('is-hidden');
+  const hideGate = () => { gate?.classList.add('is-hidden'); document.body.classList.add('xaynet-authenticated'); };
   const setBusy = busy => {
     if (submit) {
       submit.disabled = busy;
@@ -98,6 +99,7 @@
   window.XaynetBackend = {
     client,
     signOut,
+    lockCloak,
     sendFriendRequest,
     respondFriendRequest,
     cancelFriendRequest,
@@ -159,6 +161,7 @@
         });
         if (error) throw error;
         passwordInput.value = '';
+        try { localStorage.removeItem('xaynet-cloak-locked'); } catch {}
         await bootSession(data.session);
       }
     } catch (error) {
@@ -890,6 +893,15 @@
     input.click();
   }
 
+  async function lockCloak() {
+    try {
+      localStorage.setItem('xaynet-cloak-locked','1');
+      localStorage.removeItem('skibidi-chats');
+    } catch {}
+    window.XaynetApp?.closeChat?.();
+    await signOut();
+  }
+
   async function signOut() {
     signingOut=true;
     try {
@@ -912,6 +924,12 @@
   async function bootSession(session) {
     if(!session?.user)return;
     if(booting)return;
+    if(localStorage.getItem('xaynet-cloak-locked')==='1'){
+      authUser=null;
+      try { await client.auth.signOut({scope:'local'}); } catch {}
+      showGate('Cloak is locked. Sign in to unlock your account.');
+      return;
+    }
     booting=true;
     authUser=session.user;
     try{
