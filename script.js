@@ -424,7 +424,7 @@
     if(e.target.id==='profileEditOption'){closeModal();$('#editProfile')?.click();return;}
     if(e.target.id==='profileAppearanceOption'){closeModal();youView='appearance';renderAppearance();return;}
     if(e.target.id==='profileCloakSettings'){closeModal();window.XaynetCloak?.openSettings();return;}
-    if(e.target.id==='profileAdminPanel'||e.target.id==='openAdminPanel'){
+    if(e.target.closest('#profileAdminPanel, #openAdminPanel')){
       closeModal();
       if(!window.XaynetBackend?.isAdmin?.()){openModal('Admin access required','<p class="modal-description">This account is not authorized to use server controls.</p>');return;}
       openModal('Admin Panel',
