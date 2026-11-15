@@ -240,6 +240,18 @@
     updatePreview();
   };
 
+  const updateBottomNotificationDots = () => {
+    const friendsDot = $('#mobileTabbar .mobile-friends-dot');
+    const messagesDot = $('#mobileTabbar .mobile-message-dot');
+    const activityDot = $('#mobileTabbar .mobile-tab-dot');
+    const hasIncomingRequests = people.some(p => p.friendState === 'incoming');
+    const hasUnreadMessages = people.some(p => Number(p.unread) > 0);
+    const hasUnreadActivity = notificationItems.some(n => !n.read_at);
+    if (friendsDot) friendsDot.hidden = !hasIncomingRequests;
+    if (messagesDot) messagesDot.hidden = !hasUnreadMessages;
+    if (activityDot) activityDot.hidden = !hasUnreadActivity;
+  };
+
   const render = () => {
     $$('.mobile-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
     if(tab==='messages')renderMessages(); else if(tab==='friends')renderFriends(); else if(tab==='notifications')renderActivity(); else renderYou();
@@ -252,9 +264,20 @@
     openChat,
     openModal,
     closeModal,
-    setPeople(rows) { people.splice(0,people.length,...rows); render(); },
+    setPeople(rows) {
+      people.splice(0,people.length,...rows);
+      updateBottomNotificationDots();
+      render();
+    },
     setChats(rows) { chats = rows || {}; if(current) renderChat(); render(); },
-    setProfile(profile) { currentUserProfile = profile; render(); },
+    setProfile(profile) {
+      currentUserProfile = profile;
+      const tabAvatar = $('#mobileTabbar .mobile-tab-avatar img');
+      if (tabAvatar) tabAvatar.src = profile?.image || avatar;
+      const desktopAvatar = $('.profile .left .img-wrapper img');
+      if (desktopAvatar && profile?.image) desktopAvatar.src = profile.image;
+      render();
+    },
     setThemeSettings(settings) {
       themeSettings = {...themeDefaults,...(settings||{})};
       const app=$('#mobileApp');
@@ -262,7 +285,11 @@
       app.style.setProperty('--custom-gradient',`linear-gradient(${Number(themeSettings.angle)||0}deg, ${themeSettings.color1}, ${themeSettings.color2})`);
     },
     setPending(rows) { pendingRequests.splice(0,pendingRequests.length,...(rows||[])); },
-    setNotifications(rows) { notificationItems.splice(0,notificationItems.length,...(rows||[])); if(tab==='notifications')renderActivity(); },
+    setNotifications(rows) {
+      notificationItems.splice(0,notificationItems.length,...(rows||[]));
+      updateBottomNotificationDots();
+      if(tab==='notifications')renderActivity();
+    },
     get currentPeerId() { return current; },
     get currentPerson() { return person(current); },
     setTab(name) { tab=name; render(); },
