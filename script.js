@@ -170,7 +170,7 @@
       else saveTheme();
     };
     $('#appearanceBack').onclick=()=>{youView='account';renderYou();};
-    $('[data-theme-choice]').forEach(b=>b.onclick=()=>{
+    $$('[data-theme-choice]').forEach(b=>b.onclick=()=>{
       themeSettings.mode=b.dataset.themeChoice;
       applyTheme();
       renderAppearance();
