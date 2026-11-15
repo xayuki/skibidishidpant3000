@@ -264,7 +264,7 @@
       scores.forEach((item,i)=>{const y=98+i*22;ctx.fillStyle=colors[item.id];ctx.beginPath();ctx.arc(21,y-4,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e5e5e5';ctx.fillText((item.id===0?'YOU':'BOT '+item.id),32,y);ctx.textAlign='right';ctx.fillStyle='#aeb0b5';ctx.fillText(Math.round(item.area/100)+'%',innerWidth-18,y);ctx.textAlign='left';});ctx.restore();
       if(joystick){ctx.globalAlpha=.8;ctx.strokeStyle='#aaa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(joystick.cx,joystick.cy,54,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#ddd';ctx.beginPath();ctx.arc(joystick.knobX,joystick.knobY,22,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
       if(scoreEl)scoreEl.textContent='AREA '+score;
-      if(over){ctx.fillStyle='#0009';ctx.fillRect(0,0,vw,vh);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='600 25px system-ui';ctx.fillText('RUN OVER',vw/2,vh/2-8);ctx.font='14px system-ui';ctx.fillStyle='#aaa';ctx.fillText('tap restart to play again',vw/2,vh/2+22);}
+      if(over){ctx.fillStyle='#0009';ctx.fillRect(0,0,vw,vh);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='600 25px system-ui';ctx.fillText('RUN OVER',vw/2,vh/2-24);ctx.font='14px system-ui';ctx.fillStyle='#aaa';ctx.fillText('try another run',vw/2,vh/2+3);const button=$('#cloakSnakeStart');if(button){button.hidden=false;button.style.display='block';}}
     };
     const tick=(now)=>{
       if(!gate.classList.contains('cloak-active')){stopSnake();return;}
@@ -292,7 +292,7 @@
     const pointerUp=e=>{if(joystick&&joystick.pointerId===e.pointerId)joystick=null;};
     const keyDown=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)){keys.add(e.key);e.preventDefault();}};
     const keyUp=e=>keys.delete(e.key);
-    const restart=()=>{reset();draw();};
+    const restart=()=>{reset();const button=$('#cloakSnakeStart');if(button){button.hidden=true;button.style.display='none';}draw();};
     canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
     document.addEventListener('keydown',keyDown);document.addEventListener('keyup',keyUp);
     window.addEventListener('resize',resize);resize();
@@ -307,7 +307,7 @@
   }
   if(panel&&!$('#cloakGame')) {
     const game=document.createElement('section');game.className='cloak-game';game.id='cloakGame';
-    game.innerHTML='<div class="cloak-game-heading"><strong>Territory</strong><div class="cloak-game-heading-right"><span class="cloak-game-score" id="cloakSnakeScore">AREA 0</span><button type="button" class="cloak-unlock-toggle" id="cloakUnlockToggle">Log in</button></div></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Territory arena"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>drag anywhere to steer</span></div>';
+    game.innerHTML='<div class="cloak-game-heading"><strong>Territory</strong><div class="cloak-game-heading-right"><span class="cloak-game-score" id="cloakSnakeScore">AREA 0</span><button type="button" class="cloak-unlock-toggle" id="cloakUnlockToggle">Log in</button></div></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Territory arena"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart" hidden style="display:none">Play again</button><span>drag anywhere to steer</span></div>';
     gate?.appendChild(game);
     const unlock=$('#cloakUnlockToggle');
     unlock?.addEventListener('click',()=>{
