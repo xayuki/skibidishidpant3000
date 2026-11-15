@@ -154,6 +154,7 @@
       bots.forEach(b=>setBase(b.x,b.y,b.id,64,64));
       particles=[];
       trail=[];score=0;over=false;elapsed=0;camera={x:player.x,y:player.y};last=performance.now();
+      if(start){start.hidden=true;start.style.display='none';start.style.position='';start.style.left='';start.style.top='';start.style.transform='';}
     };
     const polygonArea=points=>{let area=0;for(let i=0,j=points.length-1;i<points.length;j=i++)area+=points[j].x*points[i].y-points[i].x*points[j].y;return Math.abs(area/2);};
     const burst=(points,color,count)=>{
@@ -264,7 +265,12 @@
       scores.forEach((item,i)=>{const y=98+i*22;ctx.fillStyle=colors[item.id];ctx.beginPath();ctx.arc(21,y-4,4,0,Math.PI*2);ctx.fill();ctx.fillStyle='#e5e5e5';ctx.fillText((item.id===0?'YOU':'BOT '+item.id),32,y);ctx.textAlign='right';ctx.fillStyle='#aeb0b5';ctx.fillText(Math.round(item.area/100)+'%',innerWidth-18,y);ctx.textAlign='left';});ctx.restore();
       if(joystick){ctx.globalAlpha=.8;ctx.strokeStyle='#aaa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(joystick.cx,joystick.cy,54,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#ddd';ctx.beginPath();ctx.arc(joystick.knobX,joystick.knobY,22,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
       if(scoreEl)scoreEl.textContent='AREA '+score;
-      if(over){ctx.fillStyle='#0009';ctx.fillRect(0,0,vw,vh);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='600 25px system-ui';ctx.fillText('RUN OVER',vw/2,vh/2-24);ctx.font='14px system-ui';ctx.fillStyle='#aaa';ctx.fillText('try another run',vw/2,vh/2+3);const button=$('#cloakSnakeStart');if(button){button.hidden=false;button.style.display='block';}}
+      if(over){
+        ctx.fillStyle='#000b';ctx.fillRect(0,0,vw,vh);
+        ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='600 25px system-ui';ctx.fillText('RUN OVER',vw/2,vh/2-30);
+        ctx.font='14px system-ui';ctx.fillStyle='#aaa';ctx.fillText('try another run',vw/2,vh/2-5);
+        if(start){start.hidden=false;start.style.display='block';start.style.position='fixed';start.style.left='50%';start.style.top='calc(50% + 22px)';start.style.transform='translateX(-50%)';start.style.zIndex='5';}
+      }
     };
     const tick=(now)=>{
       if(!gate.classList.contains('cloak-active')){stopSnake();return;}
