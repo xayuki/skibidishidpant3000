@@ -18,7 +18,17 @@
   let chats = {};
   try { chats = JSON.parse(localStorage.getItem('skibidi-chats') || '{}'); } catch {}
   Object.keys(starter).forEach(id => { if (!Array.isArray(chats[id])) chats[id] = starter[id]; });
-  let current = null, tab = 'messages', filter = 'online', search = '';
+  let current = null, tab = 'messages', filter = 'online', search = '', youView = 'account';
+  const themeDefaults = {mode:'oled', color1:'#111111', color2:'#343434', angle:135};
+  let themeSettings = {...themeDefaults};
+  try { themeSettings = {...themeDefaults, ...JSON.parse(localStorage.getItem('skibidi-theme') || '{}')}; } catch {}
+  const saveTheme = () => { try { localStorage.setItem('skibidi-theme', JSON.stringify(themeSettings)); } catch {} };
+  const applyTheme = () => {
+    const app = $('#mobileApp');
+    app.dataset.theme = themeSettings.mode;
+    app.style.setProperty('--custom-gradient', `linear-gradient(${Number(themeSettings.angle)||0}deg, ${themeSettings.color1}, ${themeSettings.color2})`);
+    saveTheme();
+  };
   const save = () => { try { localStorage.setItem('skibidi-chats', JSON.stringify(chats)); } catch {} };
   const esc = s => String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const person = id => people.find(p=>p.id===id);
@@ -93,14 +103,73 @@
     $('#sendFriendRequest').onclick=()=>{$('#friendFeedback').textContent=$('#friendUsername').value.trim()?'Friend request queued in this demo.':'Enter a username first.';};
   };
   const renderActivity = () => { setHeader('Activity','Your notifications'); $('#mobileContent').innerHTML='<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>'; };
-  const renderYou = () => { setHeader('You','Your account'); $('#mobileContent').innerHTML=`
+  const renderYou = () => { if(youView==='appearance'){renderAppearance();return;} setHeader('You','Your account'); $('#mobileContent').innerHTML=`
     <div class="mobile-user-card"><img src="${avatar}" alt=""><div><strong>Anonymou5</strong><span>@anonymou5 · Online</span></div><button id="editProfile"><i class="fa-solid fa-pen"></i></button></div>
     <div class="mobile-settings-group"><button data-setting="Set Status"><i class="fa-regular fa-face-smile"></i><span>Set Status</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="My Account"><i class="fa-regular fa-user"></i><span>My Account</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Appearance"><i class="fa-solid fa-palette"></i><span>Appearance</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Notifications"><i class="fa-regular fa-bell"></i><span>Notifications</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Privacy & Safety"><i class="fa-solid fa-shield-halved"></i><span>Privacy & Safety</span><i class="fa-solid fa-chevron-right"></i></button></div>
     <button class="mobile-logout" id="logoutDemo">Log Out</button>`;
     $('#editProfile').onclick=()=>{openModal('Edit Profile','<p class="modal-description">Profile editing is a local mockup.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><button class="modal-primary" id="saveProfile">Save Changes</button>');$('#saveProfile').onclick=()=>{const name=$('#profileNameInput').value.trim();if(name){$('.mobile-user-card strong').textContent=name;closeModal();}};};
-    $$('[data-setting]').forEach(b=>b.onclick=()=>openModal(b.dataset.setting,`<p class="modal-description">${b.dataset.setting} settings are represented in this interactive mockup.</p><button class="modal-primary" id="doneSetting">Done</button>`));
+    $('[data-setting]').forEach(b=>b.onclick=()=>{
+      if(b.dataset.setting==='Appearance'){youView='appearance';renderAppearance();return;}
+      openModal(b.dataset.setting,`<p class="modal-description">${b.dataset.setting} settings are represented in this interactive mockup.</p><button class="modal-primary" id="doneSetting">Done</button>`);
+    });
     $('#logoutDemo').onclick=()=>openModal('Log Out','<p class="modal-description">This is a mockup. No account is connected.</p><button class="modal-primary" id="doneSetting">Got it</button>');
   };
+
+  const renderAppearance = () => {
+    setHeader('Appearance','Make the app look the way you want');
+    const selected = themeSettings.mode;
+    $('#mobileContent').innerHTML = `
+      <button class="appearance-back" id="appearanceBack"><i class="fa-solid fa-chevron-left"></i><span>Settings</span></button>
+      <section class="appearance-section">
+        <div class="appearance-heading"><strong>Theme</strong><span>Choose your interface style</span></div>
+        <div class="appearance-theme-options">
+          <button class="appearance-theme-card ${selected==='oled'?'selected':''}" data-theme-choice="oled">
+            <span class="theme-preview theme-preview-oled"><i></i><i></i><i></i></span><strong>OLED</strong><small>Pure black</small>
+            <b class="theme-check"><i class="fa-solid fa-check"></i></b>
+          </button>
+          <button class="appearance-theme-card ${selected==='light'?'selected':''}" data-theme-choice="light">
+            <span class="theme-preview theme-preview-light"><i></i><i></i><i></i></span><strong>Light</strong><small>Bright and clean</small>
+            <b class="theme-check"><i class="fa-solid fa-check"></i></b>
+          </button>
+          <button class="appearance-theme-card ${selected==='gradient'?'selected':''}" data-theme-choice="gradient">
+            <span class="theme-preview theme-preview-gradient"><i></i><i></i><i></i></span><strong>Custom</strong><small>Two-color gradient</small>
+            <b class="theme-check"><i class="fa-solid fa-check"></i></b>
+          </button>
+        </div>
+      </section>
+      <section class="appearance-section gradient-settings ${selected==='gradient'?'':'disabled'}">
+        <div class="appearance-heading"><strong>Custom gradient</strong><span>Adjust both colors and the direction</span></div>
+        <div class="gradient-color-row">
+          <label class="gradient-color-control"><span>Color 1</span><input id="gradientColor1" type="color" value="${themeSettings.color1}"></label>
+          <label class="gradient-color-control"><span>Color 2</span><input id="gradientColor2" type="color" value="${themeSettings.color2}"></label>
+        </div>
+        <div class="gradient-angle-head"><label for="gradientAngle">Gradient angle</label><output id="gradientAngleValue">${themeSettings.angle}°</output></div>
+        <input class="gradient-angle" id="gradientAngle" type="range" min="0" max="360" step="1" value="${themeSettings.angle}">
+        <div class="gradient-angle-scale"><span>0°</span><span>90°</span><span>180°</span><span>270°</span><span>360°</span></div>
+        <div class="gradient-live-preview" id="gradientLivePreview"></div>
+      </section>
+      <p class="appearance-note">Your theme is saved on this device.</p>
+    `;
+    const updatePreview = () => {
+      const c1=$('#gradientColor1').value, c2=$('#gradientColor2').value, angle=Number($('#gradientAngle').value);
+      $('#gradientAngleValue').textContent=angle+'°';
+      $('#gradientLivePreview').style.background=`linear-gradient(${angle}deg, ${c1}, ${c2})`;
+      themeSettings={...themeSettings,color1:c1,color2:c2,angle};
+      if(themeSettings.mode==='gradient') applyTheme();
+      else saveTheme();
+    };
+    $('#appearanceBack').onclick=()=>{youView='account';renderYou();};
+    $('[data-theme-choice]').forEach(b=>b.onclick=()=>{
+      themeSettings.mode=b.dataset.themeChoice;
+      applyTheme();
+      renderAppearance();
+    });
+    $('#gradientColor1').oninput=updatePreview;
+    $('#gradientColor2').oninput=updatePreview;
+    $('#gradientAngle').oninput=updatePreview;
+    updatePreview();
+  };
+
   const render = () => {
     $$('.mobile-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
     if(tab==='messages')renderMessages(); else if(tab==='friends')renderFriends(); else if(tab==='notifications')renderActivity(); else renderYou();
@@ -129,6 +198,7 @@
   });
   const oldOpenToggle=window.openToggle;
   window.addEventListener('resize',()=>{if(window.innerWidth>750)$('#mobileChatScreen').classList.remove('open');});
+  applyTheme();
   render();
   let desktopMicMuted=false, desktopHeadMuted=false;
   const muteSound=new Audio('./Assets/discordmute_IZNcLx2.mp3');
