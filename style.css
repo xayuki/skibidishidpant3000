@@ -1750,3 +1750,62 @@ main .dm .friends .f-li[data-online="true"] .img-wrapper::after{border-color:#23
   box-shadow:none !important;
   background:transparent !important;
 }
+
+
+/* Flat, borderless message action icons. */
+.message-actions,
+.message-actions button,
+.message-actions button:hover,
+.message-actions button:focus,
+.message-actions button:focus-visible {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+}
+.message-actions {
+  background:#000 !important;
+  border-radius:0 !important;
+  padding:2px 0 !important;
+}
+.message-actions button,
+.message-actions button:hover {
+  background:transparent !important;
+  border-radius:5px !important;
+  color:#d6d6d6 !important;
+}
+.message-actions button:hover { background:#171717 !important; }
+
+/* Remove the persistent composer/input plate, including theme and focus styles. */
+.mobile-app .mobile-composer,
+.mobile-app .mobile-composer:focus,
+.mobile-app .mobile-composer:focus-within,
+.mobile-app #mobileComposer,
+.mobile-app #mobileComposer:focus,
+.mobile-app #mobileComposer:focus-within {
+  border:0 !important;
+  border-top:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  -webkit-appearance:none !important;
+  appearance:none !important;
+}
+.mobile-app #mobileComposer #mobileMessageInput,
+.mobile-app #mobileComposer #mobileMessageInput:hover,
+.mobile-app #mobileComposer #mobileMessageInput:active,
+.mobile-app #mobileComposer #mobileMessageInput:focus,
+.mobile-app #mobileComposer #mobileMessageInput:focus-visible {
+  border:0 !important;
+  outline:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  -webkit-appearance:none !important;
+  appearance:none !important;
+  border-radius:0 !important;
+}
+.mobile-app #mobileComposer * ,
+.mobile-app #mobileComposer *::before,
+.mobile-app #mobileComposer *::after {
+  outline-color:transparent !important;
+  box-shadow:none !important;
+}
