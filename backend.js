@@ -548,7 +548,8 @@
       });
     }
     const app=window.XaynetApp;
-    app.chats[peerId]=result;
+    const pending=(app.chats[peerId]||[]).filter(m=>m.pending && !result.some(saved=>saved.author==='me' && saved.text===m.text && saved.reply_to===(m.reply_to||null)));
+    app.chats[peerId]=[...result,...pending];
     const peer=app.people.find(p=>p.id===peerId);
     if(peer){peer.conversationId=conversationId;peer.hasConversation=true;}
     if(app.currentPeerId===peerId)app.renderChat();
@@ -566,22 +567,58 @@
   }
 
   async function sendMessage(peerId, content, attachments = []) {
-    const conversationId=await startDm(peerId);
     const body=String(content||'').trim();
     if(!body && !attachments.length)return;
-    const payload={
-      conversation_id:conversationId,
-      author_id:authUser.id,
-      content:body,
-      reply_to:replyTargetId,
-      attachments
+    const app=window.XaynetApp;
+    const peer=app.people.find(p=>p.id===peerId);
+    if(!peer)throw new Error('That conversation is no longer available.');
+    const localMessages=app.chats[peerId]||(app.chats[peerId]=[]);
+    const replyId=replyTargetId;
+    const parent=replyId?localMessages.find(m=>m.id===replyId):null;
+    const optimisticId='pending-'+Date.now()+'-'+Math.random().toString(36).slice(2,7);
+    const optimistic={
+      id:optimisticId,author:'me',text:body,time:new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),
+      created_at:new Date().toISOString(),reply_to:replyId,replyText:parent?.text||'',
+      attachments:attachments.map(a=>({...a})),reactions:[],pending:true
     };
-    const {error}=await client.from('messages').insert(payload);
-    if(error)throw error;
-    replyTargetId=null;
-    clearReplyPreview();
-    await loadConversation(peerId,conversationId);
-    await stopTyping(peerId);
+    localMessages.push(optimistic);
+    if(app.currentPeerId===peerId)app.renderChat();
+    if(activeDesktopPeerId===peerId)renderDesktopChat(peer);
+
+    try {
+      // Existing conversations already have an id; don't reload the whole DM before inserting.
+      let conversationId=peer.conversationId;
+      if(!conversationId)conversationId=await startDm(peerId);
+      const payload={
+        conversation_id:conversationId,
+        author_id:authUser.id,
+        content:body,
+        reply_to:replyId,
+        attachments
+      };
+      const {data,error}=await client.from('messages').insert(payload).select('id,created_at').single();
+      if(error)throw error;
+      const local=app.chats[peerId]||[];
+      const pendingMessage=local.find(m=>m.id===optimisticId);
+      if(pendingMessage){
+        pendingMessage.id=data.id;
+        pendingMessage.created_at=data.created_at;
+        pendingMessage.time=new Date(data.created_at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
+        pendingMessage.pending=false;
+      }
+      replyTargetId=null;
+      clearReplyPreview();
+      if(app.currentPeerId===peerId)app.renderChat();
+      if(activeDesktopPeerId===peerId)renderDesktopChat(peer);
+      // Refresh in the background; the optimistic message is already visible.
+      loadConversation(peerId,conversationId).catch(error=>console.warn('[Xaynet] Message refresh failed:',error));
+      stopTyping(peerId).catch(()=>{});
+    } catch(error) {
+      app.chats[peerId]=(app.chats[peerId]||[]).filter(m=>m.id!==optimisticId);
+      if(app.currentPeerId===peerId)app.renderChat();
+      if(activeDesktopPeerId===peerId)renderDesktopChat(peer);
+      throw error;
+    }
   }
 
   async function toggleReaction(messageId, emoji) {
