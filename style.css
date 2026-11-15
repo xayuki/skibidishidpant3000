@@ -2079,3 +2079,28 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 /* Restore compact Discord-like message rhythm; grouped messages should not inherit first-row padding. */
 .chat-message{padding-top:2px!important;padding-bottom:2px!important}
 .chat-message.grouped{padding-top:0!important;padding-bottom:0!important}
+
+
+/* Persistent, compact call dock: stays available while users navigate and message. */
+.xay-call-dock{position:fixed;z-index:100500;right:18px;bottom:18px;width:min(360px,calc(100vw - 24px));background:#080808;border:1px solid #303030;border-radius:14px;box-shadow:0 18px 60px #000b;color:#f4f4f4;overflow:hidden;font-size:13px}
+.xay-call-dock[hidden]{display:none}
+.xay-call-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #252525}
+.xay-call-head>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.xay-call-head strong{font-size:14px}.xay-call-head span{font-size:11px;color:#999}
+.xay-call-head button{background:#171717;border:1px solid #333;color:#ddd;border-radius:7px;width:30px;height:27px}
+.xay-call-video{display:none;position:relative;background:#111;height:190px}
+.xay-call-video.has-remote-video{display:block}
+.xay-call-video video{width:100%;height:100%;object-fit:cover}
+#xayLocalVideo{position:absolute;right:9px;bottom:9px;width:90px;height:65px;border:1px solid #777;border-radius:8px;background:#222}
+.xay-call-dock.audio-only .xay-call-video{display:none}
+.xay-call-incoming{padding:14px;display:flex;flex-direction:column;gap:12px}
+.xay-call-incoming p{margin:0;color:#ddd}
+.xay-call-incoming>div,.xay-call-controls{display:flex;align-items:center;justify-content:center;gap:10px}
+.xay-call-incoming button,.xay-call-controls button{border:0;border-radius:999px;padding:10px 15px;background:#222;color:#fff}
+#xayAccept{background:#23864e}#xayDecline,#xayHangup{background:#c33}
+.xay-call-controls{padding:12px}
+.xay-call-controls button{width:42px;height:42px;padding:0;font-size:15px}
+.xay-call-controls button.is-off{background:#555}
+.xay-call-dock.minimized{width:220px}
+.xay-call-dock.minimized .xay-call-video,.xay-call-dock.minimized .xay-call-incoming,.xay-call-dock.minimized .xay-call-controls{display:none}
+@media(max-width:600px){.xay-call-dock{right:12px;bottom:calc(78px + env(safe-area-inset-bottom));width:min(340px,calc(100vw - 24px))}.xay-call-dock.minimized{width:190px}}
