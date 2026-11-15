@@ -1843,4 +1843,4 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 .cloak-settings-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:14px 0;color:#ddd;font-size:13px}
 .cloak-settings-row select{min-width:120px;padding:9px;border:1px solid #303030;border-radius:8px;background:#080808;color:#fff}
 .cloak-settings-copy{color:#888;font-size:12px;line-height:1.5}
-@media(max-width:520px){.cloak-quick-lock{right:14px;bottom:calc(14px + env(safe-area-inset-bottom))}.auth-gate.cloak-active{align-items:flex-start}.cloak-game{padding:12px}.auth-gate.cloak-active .auth-panel{padding:24px 18px}}
+@media(max-width:750px){.cloak-quick-lock{right:14px;top:68px;bottom:auto}.auth-gate.cloak-active{align-items:flex-start}.cloak-game{padding:12px}.auth-gate.cloak-active .auth-panel{padding:24px 18px}}
