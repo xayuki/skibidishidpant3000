@@ -930,13 +930,14 @@
   async function bootSession(session) {
     if(!session?.user)return;
     if(booting)return;
+    booting=true;
     if(localStorage.getItem('xaynet-cloak-locked')==='1'){
       authUser=null;
       try { await client.auth.signOut({scope:'local'}); } catch {}
       showGate('Cloak is locked. Sign in to unlock your account.');
+      booting=false;
       return;
     }
-    booting=true;
     authUser=session.user;
     try{
       await loadAllData();
