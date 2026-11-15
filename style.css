@@ -1933,3 +1933,13 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
   .auth-gate.cloak-active .cloak-game-heading-right{gap:9px}
   .auth-gate.cloak-active .cloak-unlock-toggle{min-height:34px;padding:0 13px}
 }
+
+
+/* XAYNET polish: keep the two top-right actions separated on narrow screens. */
+.auth-gate.cloak-active .cloak-game-actions{
+  top:max(104px,calc(env(safe-area-inset-top) + 88px));
+  right:16px;
+  z-index:2;
+}
+.auth-gate.cloak-active .cloak-game-heading{z-index:3}
+.auth-gate.cloak-active .cloak-game-actions button{box-shadow:0 5px 18px #0005}
