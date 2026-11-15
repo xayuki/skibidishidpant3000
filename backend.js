@@ -48,6 +48,7 @@
   let announcementChannel = null;
   let announcementExpiryTimer = null;
   let activeAnnouncement = null;
+  const attachmentUrlCache = new Map();
 
   const showGate = (message = '', success = false) => {
     document.body.classList.remove('xaynet-authenticated');
@@ -124,6 +125,7 @@
     deleteMessage,
     setReplyTarget,
     openNotification,
+    clearActivity,
     saveTheme,
     pickAttachment
   };
@@ -563,9 +565,14 @@
       const parent=m.reply_to?byId.get(m.reply_to):null;
       const attachments=[];
       for(const file of (m.attachments||[])){
-        const storage=client.storage.from('chat-attachments');
-        const [{data:signed},{data:download}] = await Promise.all([storage.createSignedUrl(file.path,3600),storage.createSignedUrl(file.path,3600,{download:file.name||true})]);
-        attachments.push({...file,url:signed?.signedUrl||'#',downloadUrl:download?.signedUrl||signed?.signedUrl||'#'});
+        let cached=attachmentUrlCache.get(file.path);
+        if(!cached || cached.expiresAt<Date.now()){
+          const storage=client.storage.from('chat-attachments');
+          const [{data:signed},{data:download}] = await Promise.all([storage.createSignedUrl(file.path,3600),storage.createSignedUrl(file.path,3600,{download:file.name||true})]);
+          cached={url:signed?.signedUrl||'#',downloadUrl:download?.signedUrl||signed?.signedUrl||'#',expiresAt:Date.now()+50*60*1000};
+          attachmentUrlCache.set(file.path,cached);
+        }
+        attachments.push({...file,url:cached.url,downloadUrl:cached.downloadUrl});
       }
       result.push({
         id:m.id,author:m.author_id===authUser.id?'me':'them',
@@ -575,12 +582,21 @@
       });
     }
     const app=window.XaynetApp;
-    const pending=(app.chats[peerId]||[]).filter(m=>m.pending && !result.some(saved=>saved.author==='me' && saved.text===m.text && saved.reply_to===(m.reply_to||null)));
-    app.chats[peerId]=[...result,...pending];
+    const previous=app.chats[peerId]||[];
+    const pending=previous.filter(m=>m.pending && !result.some(saved=>saved.author==='me' && saved.text===m.text && saved.reply_to===(m.reply_to||null)));
+    const merged=[...result,...pending];
+    const signature=messages=>JSON.stringify(messages.map(m=>({
+      id:m.id,author:m.author,text:m.text,created_at:m.created_at,reply_to:m.reply_to,replyText:m.replyText,edited_at:m.edited_at,pending:!!m.pending,
+      attachments:(m.attachments||[]).map(a=>({path:a.path,name:a.name,mime_type:a.mime_type})),
+      reactions:(m.reactions||[]).map(r=>({id:r.id,emoji:r.emoji,mine:r.mine}))
+    })));
+    const needsMediaHydration=result.some(m=>(m.attachments||[]).some(a=>a.url==='#'||!a.url));
+    const changed=signature(previous)!==signature(merged)||needsMediaHydration;
+    app.chats[peerId]=merged;
     const peer=app.people.find(p=>p.id===peerId);
     if(peer){peer.conversationId=conversationId;peer.hasConversation=true;}
-    if(app.currentPeerId===peerId)app.renderChat();
-    if(activeDesktopPeerId===peerId)renderDesktopChat(currentPeers.get(peerId)||app.people.find(p=>p.id===peerId));
+    if(changed&&app.currentPeerId===peerId)app.renderChat();
+    if(changed&&activeDesktopPeerId===peerId)renderDesktopChat(currentPeers.get(peerId)||app.people.find(p=>p.id===peerId));
     app.render();
     await markRead(conversationId);
   }
@@ -793,6 +809,13 @@
     profile=data;
     if(previousPath)await client.storage.from('profile-media').remove([previousPath]).catch(()=>{});
     await loadAllData();
+  }
+
+  async function clearActivity() {
+    if(!authUser)return;
+    const {error}=await client.from('user_notifications').delete().eq('recipient_id',authUser.id);
+    if(error)throw error;
+    window.XaynetApp.setNotifications([]);
   }
 
   async function openNotification(notificationId) {
