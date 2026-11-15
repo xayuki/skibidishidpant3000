@@ -138,19 +138,6 @@ $$;
 revoke all on function private.is_dm_member(uuid, uuid) from public, anon;
 grant execute on function private.is_dm_member(uuid, uuid) to authenticated;
 
-create or replace function private.are_friends(p_user_a uuid, p_user_b uuid)
-returns boolean
-language sql stable security definer
-set search_path = ''
-as $$
-  select auth.uid() in (p_user_a, p_user_b) and exists (
-    select 1 from public.friendships f
-    where (f.user_a = least(p_user_a,p_user_b) and f.user_b = greatest(p_user_a,p_user_b))
-  );
-$$;
-revoke all on function private.are_friends(uuid, uuid) from public, anon;
-grant execute on function private.are_friends(uuid, uuid) to authenticated;
-
 -- Create a profile automatically when Supabase Auth creates an account.
 create or replace function private.handle_new_auth_user()
 returns trigger
