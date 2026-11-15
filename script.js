@@ -135,7 +135,7 @@
       }).join('')||'<p class="mobile-empty">Nothing to show here yet.</p>'}</div>`;
     $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderFriends();});
     $$('[data-chat]').forEach(b=>b.onclick=e=>{e.stopPropagation();openChat(b.dataset.chat);});
-    $('[data-open-profile]').forEach(b=>b.onclick=e=>{if(e.target.closest('.friend-actions'))return;profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
+    $$('[data-open-profile]').forEach(b=>b.onclick=e=>{if(e.target.closest('.friend-actions'))return;profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
     $('#addFriend').onclick=()=>openModal('Add Friend',`<p class="modal-description">Add someone with their handle.</p><input class="modal-input" id="friendUsername" placeholder="Enter a handle"><button class="modal-primary" id="sendFriendRequest">Send Friend Request</button><p class="modal-feedback" id="friendFeedback"></p>`);
     $('#sendFriendRequest').onclick=async()=> {
       const handle=$('#friendUsername').value.trim();
