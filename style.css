@@ -1947,3 +1947,17 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 
 
 .admin-panel-placeholder{display:flex;flex-direction:column;gap:7px;padding:15px;border:1px solid #292929;border-radius:12px;background:#080808}.admin-panel-placeholder strong{font-size:13px;color:#eee}.admin-panel-placeholder span{font-size:12px;line-height:1.5;color:#888}
+
+
+/* XAYNET temporary admin announcement and admin controls */
+.xaynet-global-announcement{position:fixed;z-index:12000;top:env(safe-area-inset-top,0px);left:50%;transform:translateX(-50%);width:min(calc(100% - 24px),760px);display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid #353535;border-radius:13px;background:rgba(10,10,10,.96);box-shadow:0 12px 40px #0009;color:#f5f5f5;font:500 13px/1.4 system-ui,sans-serif;backdrop-filter:blur(16px)}
+.xaynet-global-announcement-mark{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:7px;background:#f0f0f0;color:#080808;font-weight:900}
+.xaynet-global-announcement-copy{min-width:0;flex:1;overflow-wrap:anywhere}
+.xaynet-global-announcement button{border:0;background:transparent;color:#888;font-size:22px;line-height:1;padding:0 3px;cursor:pointer}
+.xaynet-admin-section{display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #292929;border-radius:13px;background:#080808}
+.xaynet-admin-section-head{display:flex;flex-direction:column;gap:4px}
+.xaynet-admin-section-head strong{font-size:13px;color:#eee}
+.xaynet-admin-section-head span,.xaynet-admin-current{font-size:11px;color:#858585}
+.xaynet-admin-message{resize:vertical;min-height:76px}
+.xaynet-admin-current{margin:0;line-height:1.5;overflow-wrap:anywhere}
+@media(max-width:750px){.xaynet-global-announcement{top:calc(env(safe-area-inset-top,0px) + 5px);font-size:12px;padding:10px 11px}}
