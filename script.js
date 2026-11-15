@@ -196,7 +196,7 @@
     };
     else $('#profileAddFriend').onclick=async()=>{try{await window.XaynetBackend.sendFriendRequest(p.handle);closeProfileSheet();}catch(err){openModal('Friend request','<p class="modal-description">'+esc(err.message||'Could not send request.')+'</p><button class="modal-primary" id="doneSetting">Okay</button>');}};
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
-    $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button><button class="modal-list-action" id="profileCloakSettings">Cloak Settings</button><button class="modal-list-action" id="profileSignOut">Sign Out</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
+    $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button><button class="modal-list-action" id="profileCloakSettings">Cloak Settings</button>'+((["39aafa7c-9d05-4746-a221-86bb48dc8eb8","6b6a2529-532f-471a-a80c-71a56477334b"]).includes(currentUserProfile?.id)?'<button class="modal-list-action" id="profileAdminPanel">Admin Panel</button>':'')+'<button class="modal-list-action" id="profileSignOut">Sign Out</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
     if(!self)$('#profileBack').onclick=closeProfileSheet;
   };
   const renderAppearance = () => {
@@ -424,6 +424,11 @@
     if(e.target.id==='profileEditOption'){closeModal();$('#editProfile')?.click();return;}
     if(e.target.id==='profileAppearanceOption'){closeModal();youView='appearance';renderAppearance();return;}
     if(e.target.id==='profileCloakSettings'){closeModal();window.XaynetCloak?.openSettings();return;}
+    if(e.target.id==='profileAdminPanel'){
+      closeModal();
+      openModal('Admin Panel','<p class="modal-description">Temporary server-wide controls for XAYNET.</p><div class="admin-panel-placeholder"><strong>No controls enabled yet</strong><span>Choose the temporary effects you want here before they are connected to server-side admin actions.</span></div>');
+      return;
+    }
     if(e.target.id==='profileSignOut'){closeModal();window.XaynetBackend.signOut();return;}
     if(e.target.id==='profileMessageOption'){closeModal();const id=$('.mobile-profile-page')?.dataset.profileId;if(id&&id!=='me')openChat(id);return;}
     if(e.target.id==='profileBackOption'){closeModal();tab=profileReturnTab;render();return;}
