@@ -2043,3 +2043,14 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 .chat-message .chat-reply-quote>span:last-child{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .reply-context-arrow{flex:0 0 auto;color:#777;font-size:12px}
 @media(max-width:520px){.mobile-reply-preview{margin:0 10px 4px;padding:2px 7px;min-height:27px}}
+
+
+/* Reply context sits on its own row above the message, never in the avatar/body column. */
+.chat-message .chat-reply-quote{
+  order:-1;flex:0 0 100%;width:auto;max-width:calc(100% - 44px);min-width:0;
+  margin:0 0 3px 44px;padding:0;border:0;background:transparent;
+  display:flex;align-items:center;gap:5px;color:#777;font-size:10px;line-height:13px;
+  white-space:nowrap;overflow:hidden
+}
+.chat-message.grouped .chat-reply-quote{margin-left:44px}
+.chat-message .chat-reply-quote>span:last-child{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
