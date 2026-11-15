@@ -106,39 +106,24 @@
     $('#sendFriendRequest').onclick=()=>{$('#friendFeedback').textContent=$('#friendUsername').value.trim()?'Friend request queued in this demo.':'Enter a username first.';};
   };
   const renderActivity = () => { setHeader('Activity','Your notifications'); $('#mobileContent').innerHTML='<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>'; };
-  const renderYou = () => {
-    if(youView==='appearance'){renderAppearance();return;}
-    setHeader('Profile','Your account');
-    $('#mobileContent').innerHTML = [
-      '<section class="mobile-profile-page">',
-        '<div class="profile-utility-row"><span class="profile-presence-label"><i></i> ONLINE NOW</span><div class="profile-quick-actions"><span class="profile-quick-pill">MY PROFILE</span><button id="profileMore" aria-label="More profile options"><i class="fa-solid fa-ellipsis"></i></button></div></div>',
-        '<section class="profile-hero-card">',
-          '<div class="profile-banner"><span class="profile-banner-mark">X</span></div>',
-          '<div class="profile-hero-content">',
-            '<span class="mobile-avatar-wrap profile-large-avatar"><img src="'+avatar+'" alt="Anonymou5"><i class="online"></i></span>',
-            '<button class="profile-hero-more" id="profileHeroMore" aria-label="Profile options"><i class="fa-solid fa-ellipsis"></i></button>',
-            '<div class="profile-identity"><strong>Anonymou5</strong><span>@anonymou5</span></div>',
-            '<div class="profile-actions"><button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button><button id="editProfile"><i class="fa-solid fa-pen"></i> Edit Profile</button></div>',
-          '</div>',
-        '</section>',
-        '<section class="profile-info-card"><div class="profile-card-heading">MEMBER SINCE</div><div class="profile-member-date"><i class="fa-regular fa-calendar"></i><span>September 18, 2026</span></div></section>',
-        '<section class="profile-info-card"><div class="profile-card-heading">CONNECTIONS</div><div class="profile-connection"><span class="profile-connection-icon"><i class="fa-brands fa-discord"></i></span><div><strong>Discord</strong><span>@anonymou5 ····</span></div><i class="fa-solid fa-circle-check profile-verified"></i></div></section>',
-        '<button class="profile-info-card profile-friends-card" id="profileFriends"><span class="profile-card-heading">FRIENDS <small>5</small></span><span class="profile-friends-row">',
-          '<span class="profile-friend-stack"><img src="./Assets/img-icon 4.jpeg" alt=""><img src="./Assets/img-icon 3.png" alt=""><img src="./Assets/img-icon 2.png" alt=""><img src="./Assets/img-icon 1.png" alt=""><img src="./Assets/img-icon.png" alt=""></span>',
-          '<i class="fa-solid fa-chevron-right"></i></span></button>',
-      '</section>'
-    ].join('');
-    const edit = () => {
-      openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><label class="modal-label">Username</label><input class="modal-input" value="@anonymou5" disabled><button class="modal-primary" id="saveProfile">Save Changes</button>');
-      $('#saveProfile').onclick=()=>{const name=$('#profileNameInput').value.trim();if(name){$('.profile-identity strong').textContent=name;closeModal();}};
-    };
-    $('#editProfile').onclick=edit;
-    $('#profileMessage').onclick=()=>{tab='messages';render();};
-    $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+people.map(p=>'<button data-friend-chat="'+p.id+'"><img src="'+p.image+'" alt=""><span>'+esc(p.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
-    $('#profileMore').onclick=()=>openModal('Profile options','<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button>');
+  const renderYou = () => { if(youView==='appearance'){renderAppearance();return;} renderProfile(null); };
+  const renderProfile = (profileId) => {
+    const p=profileId?person(profileId):{id:'me',name:'Anonymou5',image:avatar,status:'Online',online:true}; if(!p)return;
+    const self=!profileId, friends=people.filter(x=>x.id!==p.id);
+    setHeader(self?'Profile':p.name,self?'Your account':'User profile');
+    const connection=self?'<div class="profile-connection"><span class="profile-connection-icon"><i class="fa-brands fa-discord"></i></span><div><strong>Discord</strong><span>@anonymou5 ····</span></div><i class="fa-solid fa-circle-check profile-verified"></i></div>':'<div class="profile-no-connections">No connected accounts</div>';
+    const pics=friends.slice(0,5).map(x=>'<img src="'+x.image+'" alt="'+esc(x.name)+'">').join('');
+    $('#mobileContent').innerHTML='<section class="mobile-profile-page" data-profile-id="'+p.id+'"><div class="profile-utility-row"><span class="profile-presence-label"><i></i> '+(p.online?'ONLINE NOW':esc(p.status).toUpperCase())+'</span><div class="profile-quick-actions"><span class="profile-quick-pill">'+(self?'MY PROFILE':'PROFILE')+'</span><button id="profileMore"><i class="fa-solid fa-ellipsis"></i></button></div></div>'+
+      '<section class="profile-hero-card"><div class="profile-banner"><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><button class="profile-hero-more" id="profileHeroMore"><i class="fa-solid fa-ellipsis"></i></button><div class="profile-identity"><strong>'+esc(p.name)+'</strong><span>@'+esc(p.name.toLowerCase().replace(/[^a-z0-9_]/g,''))+'</span></div><div class="profile-actions"><button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button><button id="'+(self?'editProfile':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':'fa-user-plus')+'"></i> '+(self?'Edit Profile':'Add Friend')+'</button></div></div></section>'+
+      '<section class="profile-info-card"><div class="profile-card-heading">MEMBER SINCE</div><div class="profile-member-date"><i class="fa-regular fa-calendar"></i><span>'+(self?'September 18, 2026':'Member since date unavailable')+'</span></div></section><section class="profile-info-card"><div class="profile-card-heading">CONNECTIONS</div>'+connection+'</section>'+
+      '<button class="profile-info-card profile-friends-card" id="profileFriends"><span class="profile-card-heading">FRIENDS <small>'+friends.length+'</small></span><span class="profile-friends-row"><span class="profile-friend-stack">'+pics+'</span><i class="fa-solid fa-chevron-right"></i></span></button></section>';
+    const edit=()=>{openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><label class="modal-label">Username</label><input class="modal-input" value="@anonymou5" disabled><button class="modal-primary" id="saveProfile">Save Changes</button>');$('#saveProfile').onclick=()=>{const n=$('#profileNameInput').value.trim();if(n){$('.profile-identity strong').textContent=n;closeModal();}};};
+    $('#profileMessage').onclick=()=>{if(self){tab='messages';render();}else openChat(p.id);};
+    if(self)$('#editProfile').onclick=edit; else $('#profileAddFriend').onclick=()=>openModal('Friend request','<p class="modal-description">Friend requests are not connected in this demo.</p><button class="modal-primary" id="doneSetting">Okay</button>');
+    $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
+    $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
     $('#profileHeroMore').onclick=()=>$('#profileMore').click();
   };
-
   const renderAppearance = () => {
     setHeader('Appearance','Make the app look the way you want');
     const selected = themeSettings.mode;
