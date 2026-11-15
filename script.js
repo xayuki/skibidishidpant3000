@@ -72,7 +72,6 @@
             ${m.text?`<p>${esc(m.text)}</p>`:''}
             ${(m.attachments||[]).map(a=>`<a class="chat-attachment" href="${esc(a.url||'#')}" target="_blank" rel="noopener">${esc(a.name||'Attachment')}</a>`).join('')}
             ${(m.reactions||[]).length?`<div class="message-reactions">${m.reactions.map(r=>`<button data-react-message="${m.id}" data-emoji="${esc(r.emoji)}" class="${r.mine?'mine-reaction':''}">${esc(r.emoji)}</button>`).join('')}</div>`:''}
-            ${m.pending?'<span class="message-send-state">Sending</span>':''}
             <div class="message-actions">
               <button data-open-reaction="${m.id}" type="button" aria-label="Add reaction">☺</button>
               <button data-reply-message="${m.id}" type="button">Reply</button>
