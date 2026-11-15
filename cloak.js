@@ -7,7 +7,7 @@
   const panel=$('.auth-panel',gate);
   const locked=()=>{try{return localStorage.getItem(LOCK_KEY)==='1';}catch{return false;}};
   let timer=null, lastActivity=Date.now(), gameTimer=null;
-  const timeoutMinutes=()=>{const n=Number(localStorage.getItem(TIMEOUT_KEY));return [1,3,5,10,15,0].includes(n)?n:5;};
+  const timeoutMinutes=()=>{const raw=localStorage.getItem(TIMEOUT_KEY);if(raw===null)return 5;const n=Number(raw);return [1,3,5,10,15,0].includes(n)?n:5;};
   const setLockedAppearance=()=>{
     if(!gate||!panel)return;
     const active=locked();
