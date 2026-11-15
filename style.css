@@ -1809,3 +1809,7 @@ main .dm .friends .f-li[data-online="true"] .img-wrapper::after{border-color:#23
   outline-color:transparent !important;
   box-shadow:none !important;
 }
+
+
+/* The reply preview must stay hidden until a reply is actually selected. */
+.mobile-reply-preview[hidden] { display:none !important; }
