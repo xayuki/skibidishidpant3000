@@ -360,7 +360,7 @@
     if(notice) window.XaynetBackend.openNotification(notice.dataset.notificationId);
   });
   const closeMessageMenus=(except=null)=>{
-    $('#mobileChatMessages .chat-message.actions-open').forEach(row=>{if(row!==except)row.classList.remove('actions-open');});
+    $$('#mobileChatMessages .chat-message.actions-open').forEach(row=>{if(row!==except)row.classList.remove('actions-open');});
     const focused=document.activeElement;
     if(focused?.closest?.('.message-actions'))focused.blur();
   };
