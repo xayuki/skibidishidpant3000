@@ -124,20 +124,20 @@
   function startSnake(){
     const canvas=$('#cloakSnakeCanvas');
     if(!canvas||gameTimer)return;
-    const ctx=canvas.getContext('2d'), size=22, cell=Math.min(canvas.width,canvas.height)/size;
+    const ctx=canvas.getContext('2d'), size=22;let cell=Math.min(innerWidth,innerHeight)/size;
     let snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}],dir={x:1,y:0},next={x:1,y:0},food={x:12,y:9},score=0,dead=false;
     const scoreEl=$('#cloakSnakeScore'), start=$('#cloakSnakeStart');
     const placeFood=()=>{let p;do{p={x:Math.floor(Math.random()*size),y:Math.floor(Math.random()*size)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));food=p;};
-    const resize=()=>{const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);};
+    const resize=()=>{const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';cell=Math.min(innerWidth,innerHeight)/size;ctx.setTransform(dpr,0,0,dpr,0,0);draw();};
     resize();window.addEventListener('resize',resize);
     const draw=()=>{
-      const ox=(canvas.width-size*cell)/2,oy=(canvas.height-size*cell)/2;
-      ctx.fillStyle='#020202';ctx.fillRect(0,0,canvas.width,canvas.height);
+      const ox=(innerWidth-size*cell)/2,oy=(innerHeight-size*cell)/2;
+      ctx.fillStyle='#020202';ctx.fillRect(0,0,innerWidth,innerHeight);
       ctx.strokeStyle='#101010';ctx.lineWidth=1;
       for(let i=0;i<=size;i++){ctx.beginPath();ctx.moveTo(ox+i*cell,oy);ctx.lineTo(ox+i*cell,oy+size*cell);ctx.stroke();ctx.beginPath();ctx.moveTo(ox,oy+i*cell);ctx.lineTo(ox+size*cell,oy+i*cell);ctx.stroke();}
       ctx.fillStyle='#aaa';ctx.fillRect(ox+food.x*cell+3,oy+food.y*cell+3,cell-6,cell-6);
       snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#fff':'#888';ctx.fillRect(ox+s.x*cell+1,oy+s.y*cell+1,cell-2,cell-2);});
-      if(dead){ctx.fillStyle='#fff';ctx.font='bold 24px sans-serif';ctx.textAlign='center';ctx.fillText('GAME OVER',canvas.width/2,canvas.height/2);ctx.font='14px sans-serif';ctx.fillText('tap restart to play again',canvas.width/2,canvas.height/2+28);}
+      if(dead){ctx.fillStyle='#fff';ctx.font='bold 24px sans-serif';ctx.textAlign='center';ctx.fillText('GAME OVER',innerWidth/2,innerHeight/2);ctx.font='14px sans-serif';ctx.fillText('tap restart to play again',innerWidth/2,innerHeight/2+28);}
       if(scoreEl)scoreEl.textContent='SCORE '+score;
     };
     const step=()=>{
