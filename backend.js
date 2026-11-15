@@ -1129,10 +1129,7 @@
     typingStopTimer=setTimeout(()=>sendTyping(peerId,false).catch(()=>{}),1300);
   });
   $('#composerAdd')?.addEventListener('click',event=>{event.preventDefault();pickAttachment();});
-  $('#mobileCall')?.addEventListener('click',event=>{
-    event.preventDefault();
-    window.XaynetApp.openModal('Voice calls','<p class="modal-description">Voice calling needs the WebRTC media layer and call permissions to be configured before it can be enabled.</p><button class="modal-primary" id="doneSetting">Okay</button>');
-  });
+
 
   function openDesktopModal(title, body) {
     const old=$('.desktop-modal-backdrop');
