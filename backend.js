@@ -9,7 +9,7 @@
   }[ch]));
   const normalizeHandle = value => String(value || '').trim().replace(/^@/, '').toLowerCase();
   const validHandle = value => /^[a-z0-9][a-z0-9_.]{2,23}$/.test(value);
-  const authEmailForHandle = handle => handle + '@accounts.xaynet.invalid';
+  const authEmailForHandle = handle => handle + '@example.com';
   const defaultAvatar = './Assets/img-icon-profile.jpeg';
 
   const config = window.XAYNET_SUPABASE_CONFIG || {};
