@@ -1994,10 +1994,27 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
  .xaynet-media-viewer{padding:56px 10px max(14px,env(safe-area-inset-bottom))}
 }
 
-/* DM alignment and slightly smaller conversation avatars. */
+/* DM message alignment: grouped rows use the same avatar-width gutter. */
 .chat-message{gap:10px}
-.chat-message>img{width:34px;height:34px}
-.chat-message-gutter-time{display:flex;align-items:flex-start;justify-content:center;flex:0 0 34px;width:34px;min-width:34px;padding-top:2px;color:#777d86;font-size:9px;line-height:13px}
+.chat-message>img{width:36px;height:36px;flex:0 0 36px}
+.chat-message-gutter-time{
+  position:static;left:auto;top:auto;
+  display:flex;align-items:flex-start;justify-content:center;
+  flex:0 0 36px;width:36px;min-width:36px;
+  margin:0; padding-top:2px;
+  color:#777d86;font-size:9px;line-height:13px;
+  opacity:0;
+}
+.chat-message.grouped .chat-message-body{margin-left:0}
+.chat-message.grouped:hover .chat-message-gutter-time{opacity:1}
+.chat-message .chat-message-body{min-width:0;flex:1}
+.chat-message .chat-reply-quote{
+  display:block;width:fit-content;max-width:100%;
+  margin:0 0 6px;padding:4px 9px;
+  border-left:2px solid #555;
+  color:#929292;font-size:11px;line-height:15px;
+  overflow-wrap:anywhere;
+}
 .mobile-chat-header>img{width:32px;height:32px}
 .chat-profile-avatar{width:68px;height:68px}
 .desktop-chat-header>img{width:32px;height:32px}
