@@ -257,8 +257,9 @@
     reset();gameTimer=requestAnimationFrame(tick);
   }
   function stopSnake(){
-    if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
-    const canvas=$('#cloakSnakeCanvas');canvas?._cloakCleanup?.();
+    const canvas=$('#cloakSnakeCanvas');
+    canvas?._cloakCleanup?.();
+    if(gameTimer){cancelAnimationFrame(gameTimer);gameTimer=null;}
   }
   if(panel&&!$('#cloakGame')) {
     const game=document.createElement('section');game.className='cloak-game';game.id='cloakGame';
