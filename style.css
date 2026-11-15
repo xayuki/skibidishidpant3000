@@ -2172,7 +2172,7 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
   }
   .mobile-tabbar.hidden {
     display: flex !important;
-    visibility: hidden;
+    visibility: visible;
   }
   .mobile-tab {
     position: relative;
