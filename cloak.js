@@ -125,42 +125,49 @@
     const canvas=$('#cloakSnakeCanvas');
     if(!canvas||gameTimer)return;
     const ctx=canvas.getContext('2d');
-    const W=1800,H=1800,CELL=30,COLS=W/CELL,ROWS=H/CELL;
+    const W=1800,H=1800;
     const colors=['#e7e7e7','#8b9cff','#ff9b72','#8bd8b0','#d7a5ff'];
-    let player, bots=[], pellets=[], territory, trail=[], score=0, last=performance.now(), elapsed=0;
+    let player, bots=[], pellets=[], regions=[], trail=[], score=0, last=performance.now(), elapsed=0;
     let camera={x:W/2,y:H/2}, joystick=null, keys=new Set(), over=false;
     const scoreEl=$('#cloakSnakeScore'), start=$('#cloakSnakeStart');
     const resize=()=>{const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';ctx.setTransform(dpr,0,0,dpr,0,0);};
-    const idx=(x,y)=>y*COLS+x;
-    const inside=(x,y)=>x>=0&&y>=0&&x<COLS&&y<ROWS;
-    const owned=(x,y,id)=>inside(x,y)&&territory[idx(x,y)]===id;
-    const setBase=(x,y,id,rx=2,ry=2)=>{for(let yy=y-ry;yy<=y+ry;yy++)for(let xx=x-rx;xx<=x+rx;xx++)if(inside(xx,yy))territory[idx(xx,yy)]=id;};
+    const inside=(x,y)=>x>=0&&y>=0&&x<=W&&y<=H;
+    const inPolygon=(x,y,points)=>{
+      let hit=false;
+      for(let i=0,j=points.length-1;i<points.length;j=i++){
+        const a=points[i],b=points[j];
+        if(((a.y>y)!==(b.y>y))&&(x<(b.x-a.x)*(y-a.y)/(b.y-a.y)+a.x))hit=!hit;
+      }
+      return hit;
+    };
+    const owned=(x,y,id)=>regions.some(r=>r.id===id&&inPolygon(x,y,r.points));
+    const setBase=(x,y,id,rx=2,ry=2)=>{
+      const points=[];
+      for(let i=0;i<40;i++){const a=i*Math.PI*2/40;points.push({x:x+Math.cos(a)*rx,y:y+Math.sin(a)*ry});}
+      regions.push({id,points});
+    };
     const spawn=(id,x,y,angle)=>({id,x,y,angle,speed:id===0?155:105,r:13,trail:[],path:[],alive:true,turn:0,ai:Math.random()*6.28,think:0,color:colors[id]});
     const reset=()=>{
-      territory=new Int8Array(COLS*ROWS);territory.fill(-1);
-      player=spawn(0,W/2,H/2,0);setBase(Math.floor(player.x/CELL),Math.floor(player.y/CELL),0,3,3);
+      regions=[];
+      player=spawn(0,W/2,H/2,0);setBase(player.x,player.y,0,92,92);
       bots=[spawn(1,340,350,1.1),spawn(2,1450,430,3.0),spawn(3,420,1450,-.5),spawn(4,1430,1400,2.4)];
-      bots.forEach(b=>setBase(Math.floor(b.x/CELL),Math.floor(b.y/CELL),b.id,2,2));
+      bots.forEach(b=>setBase(b.x,b.y,b.id,64,64));
       pellets=Array.from({length:95},()=>({x:100+Math.random()*(W-200),y:100+Math.random()*(H-200),r:3+Math.random()*3}));
       trail=[];score=0;over=false;elapsed=0;camera={x:player.x,y:player.y};last=performance.now();
     };
     const capture=(snake)=>{
       if(snake.trail.length<5)return;
-      const poly=snake.trail.map(p=>({x:p.x/CELL,y:p.y/CELL}));
-      let minX=COLS,maxX=0,minY=ROWS,maxY=0;
-      poly.forEach(p=>{minX=Math.min(minX,Math.floor(p.x));maxX=Math.max(maxX,Math.ceil(p.x));minY=Math.min(minY,Math.floor(p.y));maxY=Math.max(maxY,Math.ceil(p.y));});
-      minX=Math.max(0,minX);minY=Math.max(0,minY);maxX=Math.min(COLS-1,maxX);maxY=Math.min(ROWS-1,maxY);
-      for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){
-        const px=x+.5,py=y+.5;let hit=false;
-        for(let i=0,j=poly.length-1;i<poly.length;j=i++){
-          const a=poly[i],b=poly[j];
-          if(((a.y>py)!==(b.y>py))&&(px<(b.x-a.x)*(py-a.y)/(b.y-a.y)+a.x))hit=!hit;
+      const points=snake.trail.map(p=>({x:p.x,y:p.y}));
+      if(points.length>=3){
+        regions.push({id:snake.id,points});
+        if(snake.id===0){
+          let area=0;for(let i=0,j=points.length-1;i<points.length;j=i++)area+=points[j].x*points[i].y-points[i].x*points[j].y;
+          score+=Math.max(1,Math.floor(Math.abs(area)/180));
         }
-        if(hit)territory[idx(x,y)]=snake.id;
       }
-      snake.trail=[];snake.path=[];if(snake.id===0)score+=Math.max(1,Math.floor((maxX-minX+1)*(maxY-minY+1)/3));
+      snake.trail=[];snake.path=[];
     };
-    const pointOwned=(s)=>owned(Math.floor(s.x/CELL),Math.floor(s.y/CELL),s.id);
+    const pointOwned=(s)=>owned(s.x,s.y,s.id);
     const steer=(s,dt)=>{
       if(s.id===0){
         let target=joystick?joystick.angle:null;
@@ -173,8 +180,7 @@
         s.think-=dt;
         if(s.think<=0){
           s.think=.6+Math.random()*1.1;
-          const gx=Math.floor(s.x/CELL),gy=Math.floor(s.y/CELL);
-          const nearEdge=!owned(gx,gy,s.id)||Math.random()<.32;
+          const nearEdge=!pointOwned(s)||Math.random()<.32;
           if(nearEdge){s.ai=s.angle+(Math.random()-.5)*1.7;}
           else s.ai=s.angle+(Math.random()-.5)*2.1;
         }
@@ -200,21 +206,21 @@
     };
     const drawSnake=(s)=>{
       if(!s.alive)return;
-      const pts=s.path;
-      ctx.lineCap='round';ctx.lineJoin='round';
-      if(pts.length>1){ctx.beginPath();pts.forEach((p,i)=>{const x=p.x-camera.x+innerWidth/2,y=p.y-camera.y+innerHeight/2;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle=s.id===0?'#f3f3f3':s.color;ctx.lineWidth=25;ctx.stroke();}
       const x=s.x-camera.x+innerWidth/2,y=s.y-camera.y+innerHeight/2;
-      ctx.fillStyle=s.id===0?'#fff':s.color;ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(x+Math.cos(s.angle-.45)*5,y+Math.sin(s.angle-.45)*5,2.2,0,Math.PI*2);ctx.arc(x+Math.cos(s.angle+.45)*5,y+Math.sin(s.angle+.45)*5,2.2,0,Math.PI*2);ctx.fill();
+      ctx.save();ctx.translate(x,y);ctx.rotate(s.angle);
+      ctx.fillStyle=s.id===0?'#fff':s.color;ctx.beginPath();ctx.moveTo(13,0);ctx.lineTo(-9,-7);ctx.lineTo(-6,0);ctx.lineTo(-9,7);ctx.closePath();ctx.fill();ctx.restore();
       if(s.trail.length>1){ctx.beginPath();s.trail.forEach((p,i)=>{const xx=p.x-camera.x+innerWidth/2,yy=p.y-camera.y+innerHeight/2;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.strokeStyle=s.id===0?'#fff9':s.color+'99';ctx.lineWidth=3;ctx.setLineDash([5,7]);ctx.stroke();ctx.setLineDash([]);}
     };
     const draw=()=>{
       const vw=innerWidth,vh=innerHeight;
       ctx.fillStyle='#08090b';ctx.fillRect(0,0,vw,vh);
       const left=camera.x-vw/2,top=camera.y-vh/2;
-      const x0=Math.max(0,Math.floor(left/CELL)),x1=Math.min(COLS-1,Math.ceil((left+vw)/CELL));
-      const y0=Math.max(0,Math.floor(top/CELL)),y1=Math.min(ROWS-1,Math.ceil((top+vh)/CELL));
-      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const id=territory[idx(x,y)];if(id>=0){ctx.fillStyle=id===0?'#24272b':colors[id]+'30';ctx.fillRect(x*CELL-left,y*CELL-top,CELL-1,CELL-1);}}
+      regions.forEach(region=>{
+        const pts=region.points;if(pts.length<3)return;
+        ctx.beginPath();pts.forEach((p,i)=>{const x=p.x-left,y=p.y-top;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.closePath();
+        ctx.fillStyle=region.id===0?'#34383e':colors[region.id]+'42';ctx.fill();
+        ctx.strokeStyle=region.id===0?'#777d86':colors[region.id]+'aa';ctx.lineWidth=2;ctx.stroke();
+      });
       ctx.strokeStyle='#25282d';ctx.lineWidth=5;ctx.strokeRect(-left,-top,W,H);
       pellets.forEach(p=>{const x=p.x-left,y=p.y-top;if(x>-10&&y>-10&&x<vw+10&&y<vh+10){ctx.fillStyle='#f3f3f3';ctx.beginPath();ctx.arc(x,y,p.r,0,Math.PI*2);ctx.fill();}});
       bots.forEach(drawSnake);drawSnake(player);
