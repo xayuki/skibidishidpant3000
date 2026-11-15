@@ -1993,3 +1993,12 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
  .chat-media-grid:has(.chat-media-preview:only-child) .chat-media-preview img,.chat-media-grid:has(.chat-media-preview:only-child) .chat-media-preview video{max-height:260px}
  .xaynet-media-viewer{padding:56px 10px max(14px,env(safe-area-inset-bottom))}
 }
+
+/* DM alignment and slightly smaller conversation avatars. */
+.chat-message{gap:10px}
+.chat-message>img{width:34px;height:34px}
+.chat-message-gutter-time{display:flex;align-items:flex-start;justify-content:center;flex:0 0 34px;width:34px;min-width:34px;padding-top:2px;color:#777d86;font-size:9px;line-height:13px}
+.mobile-chat-header>img{width:32px;height:32px}
+.chat-profile-avatar{width:68px;height:68px}
+.desktop-chat-header>img{width:32px;height:32px}
+.mobile-top-action[hidden]{display:none}
