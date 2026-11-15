@@ -1390,6 +1390,7 @@ aside .icon i { background-color: #111; }
 .auth-brand{display:flex;align-items:center;gap:12px;margin-bottom:10px;color:#fff;font-size:24px;font-weight:750;letter-spacing:-.5px}
 .auth-brand i{font-size:25px}
 .auth-intro{margin:0 0 24px;color:#969696;font-size:14px;line-height:1.5}
+.auth-field[hidden]{display:none!important}
 .auth-field{display:flex;flex-direction:column;gap:8px;margin:0 0 16px}
 .auth-field label{color:#c8c8c8;font-size:11px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
 .auth-field input{width:100%;height:46px;padding:0 13px;border:1px solid #292929;border-radius:7px;outline:none;background:#050505;color:#fff;font:inherit}
