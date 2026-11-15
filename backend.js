@@ -105,6 +105,8 @@
     isAdmin: () => adminAccess,
     getAnnouncement: () => activeAnnouncement,
     adminSetAnnouncement,
+    adminTriggerParty,
+    getCurrentHandle: () => profile?.handle || 'you',
     adminClearAnnouncement,
     signOut,
     lockCloak,
@@ -917,6 +919,14 @@
   }
 
 
+  function triggerGlobalConfetti() {
+    const canvas=document.createElement('canvas');canvas.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:11999';document.body.appendChild(canvas);
+    const ctx=canvas.getContext('2d'),dpr=Math.min(devicePixelRatio||1,2);canvas.width=innerWidth*dpr;canvas.height=innerHeight*dpr;ctx.scale(dpr,dpr);
+    const bits=Array.from({length:110},()=>({x:Math.random()*innerWidth,y:-20-Math.random()*innerHeight*.5,vx:(Math.random()-.5)*2.5,vy:2+Math.random()*4,rot:Math.random()*6.28,vr:(Math.random()-.5)*.18,size:4+Math.random()*5,hue:Math.random()*360}));
+    const start=performance.now();const frame=now=>{ctx.clearRect(0,0,innerWidth,innerHeight);bits.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.vy+=.025;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle='hsl('+p.hue+' 85% 68%)';ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*1.5);ctx.restore();});if(now-start<6500)requestAnimationFrame(frame);else canvas.remove();};
+    requestAnimationFrame(frame);setTimeout(()=>canvas.remove(),7000);
+  }
+
   function renderSitewideAnnouncement() {
     let banner = document.getElementById('xaynetGlobalAnnouncement');
     if (announcementExpiryTimer) clearTimeout(announcementExpiryTimer);
@@ -954,6 +964,12 @@
     if (error) throw error;
     await refreshSitewideAnnouncement();
   }
+  async function adminTriggerParty() {
+    if (!adminAccess) throw new Error('Admin access required.');
+    const { error } = await client.rpc('admin_trigger_party');
+    if (error) throw error;
+  }
+
   async function startAdminFeatures() {
     // This client-side check only controls panel visibility. Every write is independently
     // authorized again by the database against private.xaynet_admins.
@@ -963,6 +979,8 @@
     announcementChannel = client.channel('xaynet-sitewide-announcement')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sitewide_announcement' },
         () => { refreshSitewideAnnouncement().catch(err => console.warn('[Xaynet] Announcement refresh failed:', err)); })
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'sitewide_effects', filter: 'kind=eq.confetti' },
+        payload => { if (payload.new?.expires_at && new Date(payload.new.expires_at).getTime()>Date.now()) triggerGlobalConfetti(); })
       .subscribe();
   }
   function stopAdminFeatures() {
