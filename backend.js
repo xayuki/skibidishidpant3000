@@ -955,9 +955,9 @@
     await refreshSitewideAnnouncement();
   }
   async function startAdminFeatures() {
-    const { data, error } = await client.rpc('is_xaynet_admin');
-    if (error) throw error;
-    adminAccess = data === true;
+    // This client-side check only controls panel visibility. Every write is independently
+    // authorized again by the database against private.xaynet_admins.
+    adminAccess = ['39aafa7c-9d05-4746-a221-86bb48dc8eb8','6b6a2529-532f-471a-a80c-71a56477334b'].includes(authUser?.id);
     await refreshSitewideAnnouncement();
     if (announcementChannel) await client.removeChannel(announcementChannel);
     announcementChannel = client.channel('xaynet-sitewide-announcement')
