@@ -1943,3 +1943,6 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 }
 .auth-gate.cloak-active .cloak-game-heading{z-index:3}
 .auth-gate.cloak-active .cloak-game-actions button{box-shadow:0 5px 18px #0005}
+
+
+.admin-panel-placeholder{display:flex;flex-direction:column;gap:7px;padding:15px;border:1px solid #292929;border-radius:12px;background:#080808}.admin-panel-placeholder strong{font-size:13px;color:#eee}.admin-panel-placeholder span{font-size:12px;line-height:1.5;color:#888}
