@@ -1,5 +1,5 @@
-/* Public browser configuration only. Fill these values from the dedicated Supabase project. */
+/* Public browser configuration only. Publishable keys are designed for frontend use with RLS enabled. */
 window.XAYNET_SUPABASE_CONFIG = Object.freeze({
-  url: "https://YOUR_PROJECT_REF.supabase.co",
-  publishableKey: "YOUR_SUPABASE_PUBLISHABLE_KEY"
+  url: "https://usddsfnmwqbreddnojld.supabase.co",
+  publishableKey: "sb_publishable_JoZ8RjIMGTez1BR4kOaMoA_dYbzWdjj"
 });
