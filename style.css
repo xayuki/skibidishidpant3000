@@ -1596,3 +1596,73 @@ main .dm .friends .f-li[data-online="true"] .img-wrapper::after{border-color:#23
   .message-actions { opacity:0; }
   .chat-message.actions-open .message-actions,.chat-message:focus-within .message-actions { opacity:1; pointer-events:auto; }
 }
+
+
+/* Tighten chat rhythm and keep message tools tucked against the right edge. */
+.chat-message {
+  padding-top:4px !important;
+  padding-bottom:4px !important;
+}
+.chat-message.grouped {
+  padding-top:0 !important;
+  padding-bottom:0 !important;
+}
+.chat-message-body { position:relative; }
+.message-actions {
+  position:absolute;
+  top:-7px;
+  right:0;
+  z-index:3;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  margin:0;
+  padding:3px;
+  border:1px solid #292929;
+  border-radius:8px;
+  background:#000;
+  box-shadow:none;
+}
+.message-actions button,
+.message-actions button:hover {
+  min-width:29px;
+  min-height:27px;
+  padding:3px 7px;
+  border:1px solid #303030;
+  border-radius:6px;
+  background:#000;
+  color:#e5e5e5;
+}
+.message-actions button:hover { border-color:#666; }
+.message-reactions button,
+.message-reactions button.mine-reaction {
+  background:#000;
+  border:1px solid #303030;
+  color:#eee;
+}
+.emoji-picker-grid button,
+.emoji-picker-grid button:hover {
+  background:#000;
+  border:1px solid #303030;
+  color:#fff;
+}
+.mobile-modal,
+.mobile-modal-content,
+.mobile-modal-backdrop.show .mobile-modal {
+  background:#000 !important;
+  box-shadow:none !important;
+}
+.mobile-modal { border-color:#292929 !important; }
+.mobile-modal-head { border-bottom-color:#222 !important; }
+.mobile-composer {
+  border:0 !important;
+  border-top:0 !important;
+  box-shadow:none !important;
+  background:#000 !important;
+}
+.mobile-chat-screen { background:#000 !important; }
+.mobile-chat-header { border-bottom:0 !important; }
+.mobile-composer input {
+  box-shadow:none !important;
+  outline:0 !important;
+}
