@@ -1487,3 +1487,7 @@ main .dm .friends .f-li[data-online="true"] .img-wrapper::after{border-color:#23
 .desktop-inbox-row img{width:30px;height:30px;border-radius:50%}
 @media(max-width:1050px){.desktop-active-panel{display:none}.desktop-friends-panel{padding:20px}.desktop-chat-messages{padding:18px}}
 @media(max-width:850px){main .sidebar-chat{width:23%}main .rightside-area{width:71%}.desktop-friend-row{gap:8px;padding:8px}.desktop-chat-header{padding:10px}}
+
+
+/* The original mockup loader had no dismissal logic; keep it out of the live app. */
+.loader-home{display:none!important}
