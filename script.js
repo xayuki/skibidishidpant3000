@@ -101,8 +101,8 @@
       <div class="mobile-section-label"><span>${filter==='online'?'ONLINE — '+visible.length:filter.toUpperCase()}</span></div>
       <div class="mobile-dm-list">${visible.map(p=>`<div class="mobile-friend-row" data-open-profile="${p.id}"><span class="mobile-avatar-wrap"><img src="${p.image}" alt=""><i class="${p.online?'online':''}"></i></span><span class="mobile-dm-copy"><strong>${esc(p.name)}</strong><span>${p.status}</span></span><button class="friend-message" data-chat="${p.id}"><i class="fa-solid fa-message"></i></button></div>`).join('')||'<p class="mobile-empty">No friends to show here.</p>'}</div>`;
     $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderFriends();});
-    $('[data-chat]').forEach(b=>b.onclick=e=>{e.stopPropagation();openChat(b.dataset.chat);});
-    $('[data-open-profile]').forEach(b=>b.onclick=()=>{profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
+    $$('[data-chat]').forEach(b=>b.onclick=e=>{e.stopPropagation();openChat(b.dataset.chat);});
+    $$('[data-open-profile]').forEach(b=>b.onclick=()=>{profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
     $('#addFriend').onclick=()=>openModal('Add Friend',`<p class="modal-description">You can add friends with their username.</p><input class="modal-input" id="friendUsername" placeholder="Enter a username"><button class="modal-primary" id="sendFriendRequest">Send Friend Request</button><p class="modal-feedback" id="friendFeedback"></p>`);
     $('#sendFriendRequest').onclick=()=>{$('#friendFeedback').textContent=$('#friendUsername').value.trim()?'Friend request queued in this demo.':'Enter a username first.';};
   };
