@@ -1310,7 +1310,7 @@ aside .icon i { background-color: #111; }
   .profile-hero-more{position:absolute;right:16px;top:12px;font-size:16px}
   .profile-identity{display:flex;flex-direction:column;gap:2px;margin-top:9px}
   .profile-identity strong{font-size:22px;line-height:1.2;font-weight:850;color:#fff}
-  .profile-identity span{font-size:13px;color:#858585;filter:blur(2.2px);user-select:none}
+  .profile-identity span{font-size:13px;color:#858585}
   .profile-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:17px}
   .profile-actions button{height:42px;border:1px solid #343434;border-radius:22px;background:#171717;color:#fff;font-size:12px;font-weight:750}
   .profile-actions button:first-child{background:#fff;color:#000;border-color:#fff}
