@@ -718,7 +718,7 @@
     const message=(window.XaynetApp.chats[peerId]||[]).find(m=>m.id===messageId);
     if(!message)return;
     replyTargetId=messageId;
-    const html='<span>Replying to '+(message.author==='me'?'yourself':'message')+': '+escapeHtml((message.text||'Attachment').slice(0,110))+'</span><button type="button" class="clear-reply" aria-label="Cancel reply">×</button>';
+    const html='<span class="reply-preview-label">Replying to '+(message.author==='me'?'yourself':'them')+'</span><span class="reply-preview-text">'+escapeHtml((message.text||'Attachment').slice(0,90))+'</span><button type="button" class="clear-reply" aria-label="Cancel reply" title="Cancel reply">×</button>';
     ['#mobileReplyPreview','#desktopReplyPreview'].forEach(selector=>{
       const preview=$(selector);
       if(preview){preview.hidden=false;preview.innerHTML=html;preview.querySelector('.clear-reply').onclick=clearReplyPreview;}
