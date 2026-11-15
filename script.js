@@ -11,7 +11,10 @@
   const themeDefaults = {mode:'oled', color1:'#111111', color2:'#343434', angle:135};
   let themeSettings = {...themeDefaults};
   try { themeSettings = {...themeDefaults, ...JSON.parse(localStorage.getItem('skibidi-theme') || '{}')}; } catch {}
-  const saveTheme = () => { try { localStorage.setItem('skibidi-theme', JSON.stringify(themeSettings)); } catch {} };
+  const saveTheme = () => {
+    try { localStorage.setItem('skibidi-theme', JSON.stringify(themeSettings)); } catch {}
+    window.XaynetBackend?.saveTheme?.(themeSettings).catch(()=>{});
+  };
   const applyTheme = () => {
     const app = $('#mobileApp');
     app.dataset.theme = themeSettings.mode;
@@ -175,7 +178,7 @@
       grab.addEventListener('pointerup',finishDrag);
       grab.addEventListener('pointercancel',finishDrag);
     }
-    const edit=()=>{openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" maxlength="40" value="'+esc(p.name||'')+'"><label class="modal-label">Username</label><input class="modal-input" id="profileHandleInput" maxlength="24" value="'+esc(p.handle||'')+'"><label class="modal-label">About me</label><textarea class="modal-input" id="profileBioInput" rows="3" maxlength="190">'+esc(p.bio||'')+'</textarea><button class="modal-primary" id="saveProfile">Save Changes</button><p class="modal-feedback" id="profileFeedback"></p>');$('#saveProfile').onclick=async()=>{try{await window.XaynetBackend.updateProfile({display_name:$('#profileNameInput').value,handle:$('#profileHandleInput').value,bio:$('#profileBioInput').value});closeModal();}catch(err){$('#profileFeedback').textContent=err.message||'Could not save profile.';}};};
+    const edit=()=>{openModal('Edit Profile','<p class="modal-description">Update how people see you.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" maxlength="40" value="'+esc(p.name||'')+'"><label class="modal-label">Username</label><input class="modal-input" id="profileHandleInput" maxlength="24" value="'+esc(p.handle||'')+'" disabled><label class="modal-label">About me</label><textarea class="modal-input" id="profileBioInput" rows="3" maxlength="190">'+esc(p.bio||'')+'</textarea><button class="modal-primary" id="saveProfile">Save Changes</button><p class="modal-feedback" id="profileFeedback"></p>');$('#saveProfile').onclick=async()=>{try{await window.XaynetBackend.updateProfile({display_name:$('#profileNameInput').value,bio:$('#profileBioInput').value});closeModal();}catch(err){$('#profileFeedback').textContent=err.message||'Could not save profile.';}};};
     $('#profileMessage').onclick=()=>{if(self){tab='messages';render();}else{closeProfileSheet();window.XaynetBackend.startDm(p.id).then(()=>openChat(p.id)).catch(err=>openModal('Could not open message','<p class="modal-description">'+esc(err.message||'Try again.')+'</p>'));}};
     if(self)$('#editProfile').onclick=edit; else $('#profileAddFriend').onclick=async()=>{try{await window.XaynetBackend.sendFriendRequest(p.handle);closeProfileSheet();}catch(err){openModal('Friend request','<p class="modal-description">'+esc(err.message||'Could not send request.')+'</p><button class="modal-primary" id="doneSetting">Okay</button>');}};
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
@@ -252,6 +255,12 @@
     setPeople(rows) { people.splice(0,people.length,...rows); render(); },
     setChats(rows) { chats = rows || {}; if(current) renderChat(); render(); },
     setProfile(profile) { currentUserProfile = profile; render(); },
+    setThemeSettings(settings) {
+      themeSettings = {...themeDefaults,...(settings||{})};
+      const app=$('#mobileApp');
+      app.dataset.theme=themeSettings.mode;
+      app.style.setProperty('--custom-gradient',`linear-gradient(${Number(themeSettings.angle)||0}deg, ${themeSettings.color1}, ${themeSettings.color2})`);
+    },
     setPending(rows) { pendingRequests.splice(0,pendingRequests.length,...(rows||[])); },
     setNotifications(rows) { notificationItems.splice(0,notificationItems.length,...(rows||[])); if(tab==='notifications')renderActivity(); },
     get currentPeerId() { return current; },
