@@ -127,7 +127,7 @@
       }).join('')||'<p class="mobile-empty">Nothing to show here yet.</p>'}</div>`;
     $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderFriends();});
     $$('[data-chat]').forEach(b=>b.onclick=e=>{e.stopPropagation();openChat(b.dataset.chat);});
-    $$('[data-open-profile]').forEach(b=>b.onclick=()=>{profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
+    $('[data-open-profile]').forEach(b=>b.onclick=e=>{if(e.target.closest('.friend-actions'))return;profileReturnTab='friends';renderProfile(b.dataset.openProfile);});
     $('#addFriend').onclick=()=>openModal('Add Friend',`<p class="modal-description">Add someone with their handle.</p><input class="modal-input" id="friendUsername" placeholder="Enter a handle"><button class="modal-primary" id="sendFriendRequest">Send Friend Request</button><p class="modal-feedback" id="friendFeedback"></p>`);
     $('#sendFriendRequest').onclick=async()=> {
       const handle=$('#friendUsername').value.trim();
@@ -280,9 +280,9 @@
     window.dispatchEvent(new CustomEvent('xaynet:send-message',{detail:{peerId:current,text}}));
     input.value='';
   });
-  $('#mobileCall').onclick=()=>openModal('Start a call','<p class="modal-description">Voice and video calling are visual-only in this mockup.</p><button class="modal-primary" id="doneSetting">Okay</button>');
+  $('#mobileCall').onclick=null;
   $('#mobileChatMore').onclick=()=>openModal('Conversation','<button class="modal-list-action" id="viewProfile">View Profile</button><button class="modal-list-action" id="closeConversation">Close Conversation</button>');
-  $('#composerAdd').onclick=()=>openModal('Attachments','<p class="modal-description">Attachments are not connected in this demo.</p><button class="modal-primary" id="doneSetting">Okay</button>');
+  $('#composerAdd').onclick=null;
   $('#composerEmoji').onclick=()=>{$('#mobileMessageInput').value+=' 🙂 ';$('#mobileMessageInput').focus();};
   $('#mobileModalBackdrop').addEventListener('click',e=>{if(e.target.id==='mobileModalBackdrop')closeModal();});
   $('#mobileContent').addEventListener('click',async e=>{
