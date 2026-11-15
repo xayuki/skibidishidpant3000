@@ -1499,3 +1499,23 @@ main .dm .friends .f-li[data-online="true"] .img-wrapper::after{border-color:#23
   .mobile-app[data-theme="oled"] .mobile-modal { background:#000 !important; border-color:#242424 !important; }
   .mobile-app[data-theme="light"] .mobile-modal { background:#fff; border-color:#dfe1e5; }
 }
+
+
+/* Slightly tighter overall mobile scale; preserve the viewport and navigation proportions. */
+@media (max-width:750px) {
+  .mobile-app {
+    width:102.5641%;
+    height:102.5641%;
+    transform:scale(.975);
+    transform-origin:top left;
+  }
+  .mobile-tab-avatar,
+  .mobile-tab-avatar img {
+    width:26px;
+    height:26px;
+  }
+  .mobile-chat-screen,
+  .mobile-chat-screen * {
+    -webkit-tap-highlight-color:transparent;
+  }
+}
