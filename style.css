@@ -1285,9 +1285,9 @@ aside .icon i { background-color: #111; }
 .mobile-dm-unread{min-width:19px;height:19px;padding:0 5px;display:grid;place-items:center;border-radius:10px;background:#f2f3f5;color:#000;font-size:10px;font-weight:800;flex:none}
 .mobile-dm-row:has(.mobile-dm-unread) .mobile-dm-copy strong{color:#fff;font-weight:850}
 .mobile-tab{position:relative}
-.mobile-message-dot,.mobile-tab-dot,.mobile-friends-dot{position:absolute;top:1px;right:calc(50% - 34px);width:9px;height:9px;border-radius:50%;background:#ff334f;font-size:0}
-.mobile-message-dot,.mobile-tab-dot,.mobile-friends-dot{background:#ff334f!important;border:0!important;outline:0!important;box-shadow:none!important}
-.mobile-app[data-theme="oled"] .mobile-message-dot,.mobile-app[data-theme="oled"] .mobile-tab-dot,.mobile-app[data-theme="oled"] .mobile-friends-dot{background:#ff334f!important;border:0!important;outline:0!important;box-shadow:none!important}
+.mobile-message-dot,.mobile-tab-dot{position:absolute;top:1px;right:calc(50% - 34px);width:9px;height:9px;border-radius:50%;background:#ff334f;font-size:0}
+.mobile-message-dot,.mobile-tab-dot{background:#ff334f!important;border:0!important;outline:0!important;box-shadow:none!important}
+.mobile-app[data-theme="oled"] .mobile-message-dot,.mobile-app[data-theme="oled"] .mobile-tab-dot{background:#ff334f!important;border:0!important;outline:0!important;box-shadow:none!important}
 
 
 /* Mobile profile screen — stacked Discord-style profile cards */
@@ -1361,5 +1361,7 @@ aside .icon i { background-color: #111; }
 @media (max-width:750px){.profile-no-connections{margin-top:12px;color:#858585;font-size:13px}}
 
 
-/* Reserved unread indicators for Friends and pending requests */
-.mobile-pending-count{color:#ff334f;font-size:12px;font-weight:700;letter-spacing:0}
+/* Friends navigation indicator and pending request count */
+.mobile-friends-dot{position:absolute;top:4px;right:calc(50% - 15px);width:7px;height:7px;border-radius:50%;background:#ed4245;border:0;outline:0;box-shadow:none}
+.mobile-app[data-theme="oled"] .mobile-friends-dot{background:#ed4245!important;border:0!important;outline:0!important;box-shadow:none!important}
+.mobile-pending-count{color:#ed4245;font-size:12px;font-weight:700;letter-spacing:0}
