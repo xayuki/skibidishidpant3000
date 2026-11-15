@@ -194,7 +194,7 @@
       else if(s.trail.length>5)capture(s);
       // Colliding with an exposed trail ends the run / bot.
       for(const other of [player,...bots]){
-        if(!other.alive||!other.trail.length)continue;
+        if(other===s||!other.alive||!other.trail.length)continue;
         for(let i=0;i<other.trail.length;i+=3){const p=other.trail[i];if(Math.hypot(s.x-p.x,s.y-p.y)<s.r+5){if(s.id===0)over=true;else s.alive=false;break;}}
       }
     };
