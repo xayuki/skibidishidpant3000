@@ -2058,3 +2058,15 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 /* Allow the reply reference to occupy its own full row above the avatar and message body. */
 .chat-message{flex-wrap:wrap}
 .chat-message .chat-reply-quote{flex:0 0 calc(100% - 44px);width:calc(100% - 44px);max-width:calc(100% - 44px)}
+
+
+/* Reply context belongs directly beneath the sender name, within the message column. */
+.chat-message{flex-wrap:nowrap}
+.chat-message .chat-reply-quote{
+  order:0;flex:0 1 auto;width:auto;max-width:100%;min-width:0;
+  margin:2px 0 5px;padding:0;border:0;background:transparent;
+  display:flex;align-items:center;gap:5px;color:#777;font-size:10px;line-height:13px;
+  white-space:nowrap;overflow:hidden
+}
+.chat-message.grouped .chat-reply-quote{margin-left:0}
+.chat-message .chat-reply-quote>span:last-child{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
