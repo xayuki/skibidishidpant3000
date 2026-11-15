@@ -145,6 +145,8 @@
   };
   const renderFriends = () => {
     setHeader('Friends','Stay connected');
+    const topAction=$('#mobileNew');
+    if(topAction){topAction.hidden=false;topAction.setAttribute('aria-label','New message');topAction.title='New message';topAction.innerHTML='<i class="fa-solid fa-pen-to-square"></i>';topAction.onclick=showNewMessage;}
     const visible = people.filter(p => {
       if (filter === 'pending') return p.friendState === 'incoming' || p.friendState === 'outgoing';
       if (filter === 'blocked') return p.friendState === 'blocked';
@@ -183,7 +185,7 @@
       </button>`).join('')}</div>`
       :'<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>';
   };
-  const renderYou = () => { if(youView==='appearance'){renderAppearance();return;} renderProfile(null); };
+  const renderYou = () => { const topAction=$('#mobileNew');if(topAction){topAction.hidden=false;topAction.setAttribute('aria-label','New message');topAction.title='New message';topAction.innerHTML='<i class="fa-solid fa-pen-to-square"></i>';topAction.onclick=showNewMessage;}if(youView==='appearance'){renderAppearance();return;}renderProfile(null); };
   const renderProfile = (profileId) => {
     const p=profileId?person(profileId):(currentUserProfile||{id:'me',handle:'',name:'Profile',image:avatar,status:'Offline',online:false}); if(!p)return;
     const self=!profileId, friends=people.filter(x=>x.friendState==='friend');
