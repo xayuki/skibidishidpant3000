@@ -170,7 +170,41 @@
             </div>
         </div>
     </main>
-    <script src="./script.js"></script>
+
+    <div id="mobileApp" class="mobile-app" aria-label="Xaynet mobile mockup">
+      <header class="mobile-topbar">
+        <button class="mobile-brand" id="mobileHome" aria-label="Home"><i class="fa-brands fa-discord"></i></button>
+        <div class="mobile-top-title"><strong id="mobileTitle">Messages</strong><span id="mobileSubtitle">Your conversations</span></div>
+        <button class="mobile-top-action" id="mobileNew" aria-label="New message"><i class="fa-solid fa-pen-to-square"></i></button>
+      </header>
+      <main class="mobile-content" id="mobileContent"></main>
+      <nav class="mobile-tabbar" id="mobileTabbar" aria-label="Main navigation">
+        <button class="mobile-tab" data-tab="friends"><i class="fa-solid fa-user-group"></i><span>Friends</span></button>
+        <button class="mobile-tab active" data-tab="messages"><i class="fa-solid fa-message"></i><span>Messages</span></button>
+        <button class="mobile-tab" data-tab="notifications"><i class="fa-solid fa-bell"></i><span>Activity</span><b class="mobile-tab-dot"></b></button>
+        <button class="mobile-tab" data-tab="you"><i class="fa-solid fa-circle-user"></i><span>You</span></button>
+      </nav>
+      <section class="mobile-chat-screen" id="mobileChatScreen" aria-hidden="true">
+        <header class="mobile-chat-header">
+          <button class="mobile-back" id="mobileBack" aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>
+          <img id="mobileChatAvatar" src="./Assets/img-icon 4.jpeg" alt="">
+          <div class="mobile-chat-heading"><strong id="mobileChatName">Mr_Sigma</strong><span id="mobileChatStatus">Online</span></div>
+          <button class="mobile-chat-action" id="mobileCall" aria-label="Voice call"><i class="fa-solid fa-phone"></i></button>
+          <button class="mobile-chat-action" id="mobileChatMore" aria-label="More options"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+        </header>
+        <div class="mobile-chat-messages" id="mobileChatMessages"></div>
+        <form class="mobile-composer" id="mobileComposer">
+          <button type="button" class="composer-add" id="composerAdd" aria-label="Add attachment"><i class="fa-solid fa-plus"></i></button>
+          <input id="mobileMessageInput" autocomplete="off" placeholder="Message @user..." aria-label="Message">
+          <button type="button" class="composer-emoji" id="composerEmoji" aria-label="Emoji"><i class="fa-regular fa-face-smile"></i></button>
+          <button type="submit" class="composer-send" aria-label="Send message"><i class="fa-solid fa-arrow-up"></i></button>
+        </form>
+      </section>
+      <div class="mobile-modal-backdrop" id="mobileModalBackdrop">
+        <section class="mobile-modal" id="mobileModal" role="dialog" aria-modal="true"></section>
+      </div>
+    </div>
+\n    <script src="./script.js"></script>
 </body>
 
 </html>
