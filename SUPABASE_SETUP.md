@@ -14,7 +14,7 @@ This repository is a static HTML/CSS/JavaScript app. Its backend lives in a dedi
 
 ## Username-only account mapping
 
-The browser normalizes the handle and derives `<handle>@accounts.xaynet.invalid`. Supabase Auth requires an email identifier for its email/password provider, so the app uses that reserved, non-deliverable internal address only behind the scenes. Users only enter a display name, handle, and password; the app does not collect or display an email.
+The browser normalizes the handle and derives `<handle>@example.com`. Supabase Auth requires an email identifier for its email/password provider, so the app uses the reserved example.com domain only as an internal identifier. It is not a user's mailbox and the app does not send mail to it. Users only enter a display name, handle, and password; the app does not collect or display an email.
 
 The profile trigger stores the display name and handle. Handles are currently immutable because the handle is also the account's login identifier. Changing a handle safely needs a dedicated account-identity migration and should not be exposed as a normal profile edit.
 
