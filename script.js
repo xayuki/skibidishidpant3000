@@ -97,7 +97,7 @@
     setHeader('Friends','Stay connected');
     const visible=people.filter(p=>filter==='all'||(filter==='online'?p.online:filter==='pending'?false:!p.online));
     $('#mobileContent').innerHTML=`
-      <div class="mobile-friend-tabs">${['online','all','pending','blocked'].map(f=>`<button data-filter="${f}" class="${filter===f?'selected':''}">${f[0].toUpperCase()+f.slice(1)}</button>`).join('')}<button class="add-friend-btn" id="addFriend">Add Friend</button></div>
+      <div class="mobile-friend-tabs">${['online','all','pending','blocked'].map(f=>`<button data-filter="${f}" class="${filter===f?'selected':''}">${f[0].toUpperCase()+f.slice(1)}${f==='pending'?'<i class="mobile-pending-dot"></i>':''}</button>`).join('')}<button class="add-friend-btn" id="addFriend">Add Friend</button></div>
       <div class="mobile-section-label"><span>${filter==='online'?'ONLINE — '+visible.length:filter.toUpperCase()}</span></div>
       <div class="mobile-dm-list">${visible.map(p=>`<div class="mobile-friend-row" data-open-profile="${p.id}"><span class="mobile-avatar-wrap"><img src="${p.image}" alt=""><i class="${p.online?'online':''}"></i></span><span class="mobile-dm-copy"><strong>${esc(p.name)}</strong><span>${p.status}</span></span><button class="friend-message" data-chat="${p.id}"><i class="fa-solid fa-message"></i></button></div>`).join('')||'<p class="mobile-empty">No friends to show here.</p>'}</div>`;
     $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;renderFriends();});
