@@ -97,8 +97,7 @@
     <div class="mobile-user-card"><img src="${avatar}" alt=""><div><strong>Anonymou5</strong><span>@anonymou5 · Online</span></div><button id="editProfile"><i class="fa-solid fa-pen"></i></button></div>
     <div class="mobile-settings-group"><button data-setting="Set Status"><i class="fa-regular fa-face-smile"></i><span>Set Status</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="My Account"><i class="fa-regular fa-user"></i><span>My Account</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Appearance"><i class="fa-solid fa-palette"></i><span>Appearance</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Notifications"><i class="fa-regular fa-bell"></i><span>Notifications</span><i class="fa-solid fa-chevron-right"></i></button><button data-setting="Privacy & Safety"><i class="fa-solid fa-shield-halved"></i><span>Privacy & Safety</span><i class="fa-solid fa-chevron-right"></i></button></div>
     <button class="mobile-logout" id="logoutDemo">Log Out</button>`;
-    $('#editProfile').onclick=()=>openModal('Edit Profile','<p class="modal-description">Profile editing is a local mockup.</p><label class="modal-label">Display name</label><input class="modal-input" value="Anonymou5"><button class="modal-primary" id="saveProfile">Save Changes</button>');
-    $('#saveProfile')?.addEventListener('click',()=>{closeModal();});
+    $('#editProfile').onclick=()=>{openModal('Edit Profile','<p class="modal-description">Profile editing is a local mockup.</p><label class="modal-label">Display name</label><input class="modal-input" id="profileNameInput" value="Anonymou5"><button class="modal-primary" id="saveProfile">Save Changes</button>');$('#saveProfile').onclick=()=>{const name=$('#profileNameInput').value.trim();if(name){$('.mobile-user-card strong').textContent=name;closeModal();}};};
     $$('[data-setting]').forEach(b=>b.onclick=()=>openModal(b.dataset.setting,`<p class="modal-description">${b.dataset.setting} settings are represented in this interactive mockup.</p><button class="modal-primary" id="doneSetting">Done</button>`));
     $('#logoutDemo').onclick=()=>openModal('Log Out','<p class="modal-description">This is a mockup. No account is connected.</p><button class="modal-primary" id="doneSetting">Got it</button>');
   };
@@ -111,6 +110,7 @@
   $('#mobileBack').onclick=closeChat;
   $('#mobileNew').onclick=showNewMessage;
   $('#mobileHome').onclick=()=>{if(current)closeChat();tab='messages';render();};
+  $('#mobileChatMessages').addEventListener('click',e=>{if(e.target.closest('[data-profile]')&&current){const p=person(current);openModal(p.name,`<div class="modal-profile"><img src="${p.image}" alt=""><h2>${esc(p.name)}</h2><p>${p.status}</p></div><button class="modal-primary" id="doneSetting">Done</button>`);}});
   $('#mobileComposer').addEventListener('submit',e=>{
     e.preventDefault();const input=$('#mobileMessageInput'),text=input.value.trim();if(!text||!current)return;
     chats[current].push({author:'me',text,time:new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})});
