@@ -15,9 +15,9 @@
     gate.classList.toggle('cloak-active',active);
     if(active){
       const brand=$('.auth-brand span',panel), intro=$('#authIntro'), foot=$('.auth-footnote',panel);
-      if(brand)brand.textContent='Cloak';
-      if(intro)intro.textContent='Cloak is locked. Sign in with your XAYNET account to unlock.';
-      if(foot)foot.textContent='Your conversations stay unavailable until your account is authenticated.';
+      if(brand)brand.textContent='Welcome back';
+      if(intro)intro.textContent='Sign in to continue to your account.';
+      if(foot)foot.textContent='Enter your username and password to continue.';
       $('#authModeToggle')?.setAttribute('hidden','');
       if(window.XaynetBackend && window.XaynetBackend.client) {
         // The lock screen intentionally uses the existing account sign-in form.
@@ -124,42 +124,137 @@
   function startSnake(){
     const canvas=$('#cloakSnakeCanvas');
     if(!canvas||gameTimer)return;
-    const ctx=canvas.getContext('2d'), size=22;let cell=Math.min(innerWidth,innerHeight)/size;
-    let snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}],dir={x:1,y:0},next={x:1,y:0},food={x:12,y:9},score=0,dead=false;
+    const ctx=canvas.getContext('2d');
+    const W=1800,H=1800,CELL=30,COLS=W/CELL,ROWS=H/CELL;
+    const colors=['#e7e7e7','#8b9cff','#ff9b72','#8bd8b0','#d7a5ff'];
+    let player, bots=[], pellets=[], territory, trail=[], score=0, last=performance.now(), elapsed=0;
+    let camera={x:W/2,y:H/2}, joystick=null, keys=new Set(), over=false;
     const scoreEl=$('#cloakSnakeScore'), start=$('#cloakSnakeStart');
-    const placeFood=()=>{let p;do{p={x:Math.floor(Math.random()*size),y:Math.floor(Math.random()*size)}}while(snake.some(s=>s.x===p.x&&s.y===p.y));food=p;};
-    const resize=()=>{const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';cell=Math.min(innerWidth,innerHeight)/size;ctx.setTransform(dpr,0,0,dpr,0,0);draw();};
+    const resize=()=>{const dpr=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(innerWidth*dpr);canvas.height=Math.round(innerHeight*dpr);canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';ctx.setTransform(dpr,0,0,dpr,0,0);};
+    const idx=(x,y)=>y*COLS+x;
+    const inside=(x,y)=>x>=0&&y>=0&&x<COLS&&y<ROWS;
+    const owned=(x,y,id)=>inside(x,y)&&territory[idx(x,y)]===id;
+    const setBase=(x,y,id,rx=2,ry=2)=>{for(let yy=y-ry;yy<=y+ry;yy++)for(let xx=x-rx;xx<=x+rx;xx++)if(inside(xx,yy))territory[idx(xx,yy)]=id;};
+    const spawn=(id,x,y,angle)=>({id,x,y,angle,speed:id===0?155:105,r:13,trail:[],path:[],alive:true,turn:0,ai:Math.random()*6.28,think:0,color:colors[id]});
+    const reset=()=>{
+      territory=new Int8Array(COLS*ROWS);territory.fill(-1);
+      player=spawn(0,W/2,H/2,0);setBase(Math.floor(player.x/CELL),Math.floor(player.y/CELL),0,3,3);
+      bots=[spawn(1,340,350,1.1),spawn(2,1450,430,3.0),spawn(3,420,1450,-.5),spawn(4,1430,1400,2.4)];
+      bots.forEach(b=>setBase(Math.floor(b.x/CELL),Math.floor(b.y/CELL),b.id,2,2));
+      pellets=Array.from({length:95},()=>({x:100+Math.random()*(W-200),y:100+Math.random()*(H-200),r:3+Math.random()*3}));
+      trail=[];score=0;over=false;elapsed=0;camera={x:player.x,y:player.y};last=performance.now();
+    };
+    const capture=(snake)=>{
+      if(snake.trail.length<5)return;
+      const poly=snake.trail.map(p=>({x:p.x/CELL,y:p.y/CELL}));
+      let minX=COLS,maxX=0,minY=ROWS,maxY=0;
+      poly.forEach(p=>{minX=Math.min(minX,Math.floor(p.x));maxX=Math.max(maxX,Math.ceil(p.x));minY=Math.min(minY,Math.floor(p.y));maxY=Math.max(maxY,Math.ceil(p.y));});
+      minX=Math.max(0,minX);minY=Math.max(0,minY);maxX=Math.min(COLS-1,maxX);maxY=Math.min(ROWS-1,maxY);
+      for(let y=minY;y<=maxY;y++)for(let x=minX;x<=maxX;x++){
+        const px=x+.5,py=y+.5;let hit=false;
+        for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+          const a=poly[i],b=poly[j];
+          if(((a.y>py)!==(b.y>py))&&(px<(b.x-a.x)*(py-a.y)/(b.y-a.y)+a.x))hit=!hit;
+        }
+        if(hit)territory[idx(x,y)]=snake.id;
+      }
+      snake.trail=[];snake.path=[];if(snake.id===0)score+=Math.max(1,Math.floor((maxX-minX+1)*(maxY-minY+1)/3));
+    };
+    const pointOwned=(s)=>owned(Math.floor(s.x/CELL),Math.floor(s.y/CELL),s.id);
+    const steer=(s,dt)=>{
+      if(s.id===0){
+        let target=joystick?joystick.angle:null;
+        if(keys.has('ArrowUp')||keys.has('w'))target=-Math.PI/2;
+        if(keys.has('ArrowDown')||keys.has('s'))target=Math.PI/2;
+        if(keys.has('ArrowLeft')||keys.has('a'))target=Math.PI;
+        if(keys.has('ArrowRight')||keys.has('d'))target=0;
+        if(target!==null){let diff=Math.atan2(Math.sin(target-s.angle),Math.cos(target-s.angle));s.angle+=Math.max(-3.2*dt,Math.min(3.2*dt,diff));}
+      }else{
+        s.think-=dt;
+        if(s.think<=0){
+          s.think=.6+Math.random()*1.1;
+          const gx=Math.floor(s.x/CELL),gy=Math.floor(s.y/CELL);
+          const nearEdge=!owned(gx,gy,s.id)||Math.random()<.32;
+          if(nearEdge){s.ai=s.angle+(Math.random()-.5)*1.7;}
+          else s.ai=s.angle+(Math.random()-.5)*2.1;
+        }
+        let diff=Math.atan2(Math.sin(s.ai-s.angle),Math.cos(s.ai-s.angle));
+        s.angle+=Math.max(-1.7*dt,Math.min(1.7*dt,diff));
+      }
+    };
+    const updateSnake=(s,dt)=>{
+      if(!s.alive)return;
+      steer(s,dt);
+      s.x+=Math.cos(s.angle)*s.speed*dt;s.y+=Math.sin(s.angle)*s.speed*dt;
+      if(s.x<20||s.y<20||s.x>W-20||s.y>H-20){if(s.id===0)over=true;else{s.alive=false;}return;}
+      s.path.push({x:s.x,y:s.y});
+      if(s.path.length>120)s.path.shift();
+      const own=pointOwned(s);
+      if(!own){s.trail.push({x:s.x,y:s.y});if(s.trail.length>160){if(s.id===0)over=true;else s.alive=false;}}
+      else if(s.trail.length>5)capture(s);
+      // Colliding with an exposed trail ends the run / bot.
+      for(const other of [player,...bots]){
+        if(!other.alive||!other.trail.length)continue;
+        for(let i=0;i<other.trail.length;i+=3){const p=other.trail[i];if(Math.hypot(s.x-p.x,s.y-p.y)<s.r+5){if(s.id===0)over=true;else s.alive=false;break;}}
+      }
+    };
+    const drawSnake=(s)=>{
+      if(!s.alive)return;
+      const pts=s.path;
+      ctx.lineCap='round';ctx.lineJoin='round';
+      if(pts.length>1){ctx.beginPath();pts.forEach((p,i)=>{const x=p.x-camera.x+innerWidth/2,y=p.y-camera.y+innerHeight/2;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle=s.id===0?'#f3f3f3':s.color;ctx.lineWidth=25;ctx.stroke();}
+      const x=s.x-camera.x+innerWidth/2,y=s.y-camera.y+innerHeight/2;
+      ctx.fillStyle=s.id===0?'#fff':s.color;ctx.beginPath();ctx.arc(x,y,14,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle='#111';ctx.beginPath();ctx.arc(x+Math.cos(s.angle-.45)*5,y+Math.sin(s.angle-.45)*5,2.2,0,Math.PI*2);ctx.arc(x+Math.cos(s.angle+.45)*5,y+Math.sin(s.angle+.45)*5,2.2,0,Math.PI*2);ctx.fill();
+      if(s.trail.length>1){ctx.beginPath();s.trail.forEach((p,i)=>{const xx=p.x-camera.x+innerWidth/2,yy=p.y-camera.y+innerHeight/2;i?ctx.lineTo(xx,yy):ctx.moveTo(xx,yy);});ctx.strokeStyle=s.id===0?'#fff9':s.color+'99';ctx.lineWidth=3;ctx.setLineDash([5,7]);ctx.stroke();ctx.setLineDash([]);}
+    };
     const draw=()=>{
-      const ox=(innerWidth-size*cell)/2,oy=(innerHeight-size*cell)/2;
-      ctx.fillStyle='#020202';ctx.fillRect(0,0,innerWidth,innerHeight);
-      ctx.strokeStyle='#101010';ctx.lineWidth=1;
-      for(let i=0;i<=size;i++){ctx.beginPath();ctx.moveTo(ox+i*cell,oy);ctx.lineTo(ox+i*cell,oy+size*cell);ctx.stroke();ctx.beginPath();ctx.moveTo(ox,oy+i*cell);ctx.lineTo(ox+size*cell,oy+i*cell);ctx.stroke();}
-      ctx.fillStyle='#aaa';ctx.fillRect(ox+food.x*cell+3,oy+food.y*cell+3,cell-6,cell-6);
-      snake.forEach((s,i)=>{ctx.fillStyle=i===0?'#fff':'#888';ctx.fillRect(ox+s.x*cell+1,oy+s.y*cell+1,cell-2,cell-2);});
-      if(dead){ctx.fillStyle='#fff';ctx.font='bold 24px sans-serif';ctx.textAlign='center';ctx.fillText('GAME OVER',innerWidth/2,innerHeight/2);ctx.font='14px sans-serif';ctx.fillText('tap restart to play again',innerWidth/2,innerHeight/2+28);}
-      if(scoreEl)scoreEl.textContent='SCORE '+score;
+      const vw=innerWidth,vh=innerHeight;
+      ctx.fillStyle='#08090b';ctx.fillRect(0,0,vw,vh);
+      const left=camera.x-vw/2,top=camera.y-vh/2;
+      const x0=Math.max(0,Math.floor(left/CELL)),x1=Math.min(COLS-1,Math.ceil((left+vw)/CELL));
+      const y0=Math.max(0,Math.floor(top/CELL)),y1=Math.min(ROWS-1,Math.ceil((top+vh)/CELL));
+      for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const id=territory[idx(x,y)];if(id>=0){ctx.fillStyle=id===0?'#24272b':colors[id]+'30';ctx.fillRect(x*CELL-left,y*CELL-top,CELL-1,CELL-1);}}
+      ctx.strokeStyle='#25282d';ctx.lineWidth=5;ctx.strokeRect(-left,-top,W,H);
+      pellets.forEach(p=>{const x=p.x-left,y=p.y-top;if(x>-10&&y>-10&&x<vw+10&&y<vh+10){ctx.fillStyle='#f3f3f3';ctx.beginPath();ctx.arc(x,y,p.r,0,Math.PI*2);ctx.fill();}});
+      bots.forEach(drawSnake);drawSnake(player);
+      if(joystick){ctx.globalAlpha=.8;ctx.strokeStyle='#aaa';ctx.lineWidth=2;ctx.beginPath();ctx.arc(joystick.cx,joystick.cy,54,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#ddd';ctx.beginPath();ctx.arc(joystick.knobX,joystick.knobY,22,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;}
+      if(scoreEl)scoreEl.textContent='AREA '+score;
+      if(over){ctx.fillStyle='#0009';ctx.fillRect(0,0,vw,vh);ctx.textAlign='center';ctx.fillStyle='#fff';ctx.font='600 25px system-ui';ctx.fillText('RUN OVER',vw/2,vh/2-8);ctx.font='14px system-ui';ctx.fillStyle='#aaa';ctx.fillText('tap restart to play again',vw/2,vh/2+22);}
     };
-    resize();window.addEventListener('resize',resize);
-    const step=()=>{
-      if(dead)return;
-      dir=next;const head={x:(snake[0].x+dir.x+size)%size,y:(snake[0].y+dir.y+size)%size};
-      if(snake.some(s=>s.x===head.x&&s.y===head.y)){dead=true;draw();return;}
-      snake.unshift(head);
-      if(head.x===food.x&&head.y===food.y){score++;placeFood();}else snake.pop();
-      draw();
+    const tick=(now)=>{
+      if(!gate.classList.contains('cloak-active')){stopSnake();return;}
+      const dt=Math.min(.04,(now-last)/1000);last=now;
+      if(!over){
+        updateSnake(player,dt);bots.forEach(b=>updateSnake(b,dt));
+        camera.x+=(player.x-camera.x)*Math.min(1,dt*5);camera.y+=(player.y-camera.y)*Math.min(1,dt*5);
+        pellets=pellets.filter(p=>{if(Math.hypot(player.x-p.x,player.y-p.y)<22){score+=2;return false;}return true;});
+        while(pellets.length<95)pellets.push({x:80+Math.random()*(W-160),y:80+Math.random()*(H-160),r:3+Math.random()*3});
+      }
+      draw();gameTimer=requestAnimationFrame(tick);
     };
-    const setDir=d=>{if(d.x===-dir.x&&d.y===-dir.y)return;next=d;};
-    const key=e=>{const map={ArrowUp:{x:0,y:-1},w:{x:0,y:-1},ArrowDown:{x:0,y:1},s:{x:0,y:1},ArrowLeft:{x:-1,y:0},a:{x:-1,y:0},ArrowRight:{x:1,y:0},d:{x:1,y:0}};if(map[e.key]){e.preventDefault();setDir(map[e.key]);}};
-    document.addEventListener('keydown',key);
-    const controls=Array.from(document.querySelectorAll('#cloakGamePad button'));
-    controls.forEach(b=>b.onclick=()=>setDir(JSON.parse(b.dataset.dir)));
-    const restart=()=>{snake=[{x:8,y:9},{x:7,y:9},{x:6,y:9}];dir=next={x:1,y:0};score=0;dead=false;placeFood();draw();};
+    const point=e=>({x:e.clientX,y:e.clientY});
+    const pointerDown=e=>{
+      if(e.pointerType==='mouse'&&e.button!==0)return;
+      canvas.setPointerCapture?.(e.pointerId);
+      const p=point(e);joystick={cx:p.x,cy:p.y,knobX:p.x,knobY:p.y,angle:player.angle,pointerId:e.pointerId};
+    };
+    const pointerMove=e=>{
+      if(!joystick||joystick.pointerId!==e.pointerId)return;
+      const p=point(e),dx=p.x-joystick.cx,dy=p.y-joystick.cy,len=Math.hypot(dx,dy),r=54,k=Math.min(1,r/(len||1));
+      joystick.knobX=joystick.cx+dx*k;joystick.knobY=joystick.cy+dy*k;
+      if(len>8)joystick.angle=Math.atan2(dy,dx);
+    };
+    const pointerUp=e=>{if(joystick&&joystick.pointerId===e.pointerId)joystick=null;};
+    const keyDown=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d'].includes(e.key)){keys.add(e.key);e.preventDefault();}};
+    const keyUp=e=>keys.delete(e.key);
+    const restart=()=>{reset();draw();};
+    canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointermove',pointerMove);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('pointercancel',pointerUp);
+    document.addEventListener('keydown',keyDown);document.addEventListener('keyup',keyUp);
+    window.addEventListener('resize',resize);resize();
     if(start)start.onclick=restart;
-    let touch=null;
-    canvas.onpointerdown=e=>{touch={x:e.clientX,y:e.clientY};};
-    canvas.onpointerup=e=>{if(!touch)return;const dx=e.clientX-touch.x,dy=e.clientY-touch.y;if(Math.abs(dx)>Math.abs(dy))setDir({x:Math.sign(dx),y:0});else setDir({x:0,y:Math.sign(dy)});touch=null;};
-    draw();gameTimer=setInterval(step,145);
-    canvas._cloakCleanup=()=>{document.removeEventListener('keydown',key);window.removeEventListener('resize',resize);};
+    canvas._cloakCleanup=()=>{cancelAnimationFrame(gameTimer);gameTimer=null;canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointermove',pointerMove);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('pointercancel',pointerUp);document.removeEventListener('keydown',keyDown);document.removeEventListener('keyup',keyUp);window.removeEventListener('resize',resize);};
+    reset();gameTimer=requestAnimationFrame(tick);
   }
   function stopSnake(){
     if(gameTimer){clearInterval(gameTimer);gameTimer=null;}
@@ -167,7 +262,7 @@
   }
   if(panel&&!$('#cloakGame')) {
     const game=document.createElement('section');game.className='cloak-game';game.id='cloakGame';
-    game.innerHTML='<div class="cloak-game-heading"><strong>Snake</strong><div class="cloak-game-heading-right"><span class="cloak-game-score" id="cloakSnakeScore">SCORE 0</span><button type="button" class="cloak-unlock-toggle" id="cloakUnlockToggle">Log in</button></div></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Snake game"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>use arrow keys, WASD, or swipe</span></div><div class="cloak-game-pad" id="cloakGamePad"><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:-1}" aria-label="Up">↑</button><button type="button" data-dir="{&quot;x&quot;:-1,&quot;y&quot;:0}" aria-label="Left">←</button><button type="button" data-dir="{&quot;x&quot;:0,&quot;y&quot;:1}" aria-label="Down">↓</button><button type="button" data-dir="{&quot;x&quot;:1,&quot;y&quot;:0}" aria-label="Right">→</button></div>';
+    game.innerHTML='<div class="cloak-game-heading"><strong>Territory</strong><div class="cloak-game-heading-right"><span class="cloak-game-score" id="cloakSnakeScore">SCORE 0</span><button type="button" class="cloak-unlock-toggle" id="cloakUnlockToggle">Log in</button></div></div><div class="cloak-game-canvas-wrap"><canvas id="cloakSnakeCanvas" width="270" height="270" aria-label="Territory arena"></canvas></div><div class="cloak-game-actions"><button type="button" id="cloakSnakeStart">Restart</button><span>drag anywhere to steer</span></div>';
     gate?.appendChild(game);
     const unlock=$('#cloakUnlockToggle');
     unlock?.addEventListener('click',()=>{
