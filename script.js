@@ -18,7 +18,7 @@
   let chats = {};
   try { chats = JSON.parse(localStorage.getItem('skibidi-chats') || '{}'); } catch {}
   Object.keys(starter).forEach(id => { if (!Array.isArray(chats[id])) chats[id] = starter[id]; });
-  let current = null, tab = 'messages', filter = 'online', search = '', youView = 'account';
+  let current = null, tab = 'messages', filter = 'online', search = '', youView = 'account', profileReturnTab = 'messages';
   const themeDefaults = {mode:'oled', color1:'#111111', color2:'#343434', angle:135};
   let themeSettings = {...themeDefaults};
   try { themeSettings = {...themeDefaults, ...JSON.parse(localStorage.getItem('skibidi-theme') || '{}')}; } catch {}
@@ -188,7 +188,7 @@
   $('#mobileBack').onclick=closeChat;
   $('#mobileNew').onclick=showNewMessage;
   $('#mobileHome').onclick=()=>{if(current)closeChat();tab='messages';render();};
-  $('#mobileChatMessages').addEventListener('click',e=>{if(e.target.closest('[data-profile]')&&current){const p=person(current);openModal(p.name,`<div class="modal-profile"><span class="mobile-avatar-wrap modal-profile-avatar"><img src="${p.image}" alt=""><i class="${presenceClass(p)}"></i></span><h2>${esc(p.name)}</h2><p>${p.status}</p></div><button class="modal-primary" id="doneSetting">Done</button>`);}});
+  $('#mobileChatMessages').addEventListener('click',e=>{if(e.target.closest('[data-profile]')&&current){profileReturnTab='messages';const id=current;$('#mobileChatScreen').classList.remove('open');$('#mobileChatScreen').setAttribute('aria-hidden','true');$('#mobileTabbar').classList.remove('hidden');renderProfile(id);}});
   $('#mobileComposer').addEventListener('submit',e=>{
     e.preventDefault();const input=$('#mobileMessageInput'),text=input.value.trim();if(!text||!current)return;
     chats[current].push({author:'me',text,time:new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})});
@@ -204,9 +204,11 @@
     const friend=e.target.closest('[data-friend-chat]');if(friend){const id=friend.dataset.friendChat;closeModal();tab='messages';render();openChat(id);return;}
     if(e.target.id==='profileEditOption'){closeModal();$('#editProfile')?.click();return;}
     if(e.target.id==='profileAppearanceOption'){closeModal();youView='appearance';renderAppearance();return;}
+    if(e.target.id==='profileMessageOption'){closeModal();const id=$('.mobile-profile-page')?.dataset.profileId;if(id&&id!=='me')openChat(id);return;}
+    if(e.target.id==='profileBackOption'){closeModal();tab=profileReturnTab;render();return;}
     if(e.target.id==='doneSetting')closeModal();
     if(e.target.id==='closeConversation'){closeModal();closeChat();}
-    if(e.target.id==='viewProfile'&&current){const p=person(current);openModal(p.name,`<div class="modal-profile"><img src="${p.image}" alt=""><h2>${esc(p.name)}</h2><p>${p.status}</p></div><button class="modal-primary" id="doneSetting">Done</button>`);}
+    if(e.target.id==='viewProfile'&&current){const id=current;closeModal();$('#mobileChatScreen').classList.remove('open');$('#mobileChatScreen').setAttribute('aria-hidden','true');$('#mobileTabbar').classList.remove('hidden');profileReturnTab='messages';renderProfile(id);}
   });
   const oldOpenToggle=window.openToggle;
   window.addEventListener('resize',()=>{if(window.innerWidth>750)$('#mobileChatScreen').classList.remove('open');});
