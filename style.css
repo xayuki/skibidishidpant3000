@@ -1844,3 +1844,10 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
 .cloak-settings-row select{min-width:120px;padding:9px;border:1px solid #303030;border-radius:8px;background:#080808;color:#fff}
 .cloak-settings-copy{color:#888;font-size:12px;line-height:1.5}
 @media(max-width:750px){.cloak-quick-lock{right:14px;top:68px;bottom:auto}.auth-gate.cloak-active{align-items:flex-start}.cloak-game{padding:12px}.auth-gate.cloak-active .auth-panel{padding:24px 18px}}
+
+.cloak-settings-modal{border-color:#292929;background:#080808;box-shadow:0 25px 90px #000b}
+.cloak-settings-modal>header{border-color:#242424;color:#f2f2f2}
+.cloak-settings-modal>header button{color:#999}
+.cloak-settings-modal .desktop-modal-body{color:#ddd}
+.cloak-settings-modal .desktop-modal-body button{border:1px solid #eee;background:#eee;color:#080808}
+.cloak-settings-modal .cloak-settings-row select{background:#050505;color:#fff;border-color:#333}
