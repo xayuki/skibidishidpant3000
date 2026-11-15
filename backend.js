@@ -9,7 +9,7 @@
   }[ch]));
   const normalizeHandle = value => String(value || '').trim().replace(/^@/, '').toLowerCase();
   const validHandle = value => /^[a-z0-9][a-z0-9_.]{2,23}$/.test(value);
-  const authEmailForHandle = handle => handle + '@example.com';
+  const authEmailForHandle = handle => handle + '@accounts.xaynet.invalid';
   const defaultAvatar = './Assets/img-icon-profile.jpeg';
 
   const config = window.XAYNET_SUPABASE_CONFIG || {};
@@ -166,6 +166,7 @@
 
   function userFacingAuthError(error) {
     const message = String(error?.message || 'Something went wrong.');
+    if (error?.code === 'email_address_invalid') return 'Supabase is still trying to send a confirmation email. In Authentication → Providers → Email, switch Confirm email OFF and save. Xaynet uses handle-only accounts and does not send email.';
     if (/already registered|user already exists/i.test(message)) return 'That handle is already registered.';
     if (/invalid login credentials/i.test(message)) return 'That handle or password is incorrect.';
     if (/password should be at least/i.test(message)) return 'Choose a longer password.';
