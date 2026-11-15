@@ -102,6 +102,7 @@
     respondFriendRequest,
     cancelFriendRequest,
     unblockUser,
+    removeFriend,
     updateProfile,
     uploadProfileMedia,
     startDm,
