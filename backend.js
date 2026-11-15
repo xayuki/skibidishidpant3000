@@ -11,7 +11,6 @@
   const normalizeHandle = value => String(value || '').trim().replace(/^@/, '').toLowerCase();
   const validHandle = value => /^[a-z0-9][a-z0-9_.]{2,23}$/.test(value);
   const authEmailForHandle = handle => handle + '@accounts.xaynet.invalid';
-  const defaultAvatar = './Assets/img-icon-profile.jpeg';
 
   const config = window.XAYNET_SUPABASE_CONFIG || {};
   const gate = $('#authGate');
@@ -104,6 +103,7 @@
     cancelFriendRequest,
     unblockUser,
     updateProfile,
+    uploadProfileMedia,
     startDm,
     sendMessage,
     toggleReaction,
@@ -176,9 +176,14 @@
   }
 
   function profileImage(row) {
-    if (!row?.avatar_path) return defaultAvatar;
+    if (!row?.avatar_path) return null;
     const { data } = client.storage.from('profile-media').getPublicUrl(row.avatar_path);
-    return data?.publicUrl || defaultAvatar;
+    return data?.publicUrl || null;
+  }
+  function profileBanner(row) {
+    if (!row?.banner_path) return null;
+    const { data } = client.storage.from('profile-media').getPublicUrl(row.banner_path);
+    return data?.publicUrl || null;
   }
 
   function toPerson(row, extra = {}) {
@@ -189,6 +194,7 @@
       handle: row.handle,
       name: row.display_name,
       image: profileImage(row),
+      banner: profileBanner(row),
       bio: row.bio || '',
       status: row.status_text || (online ? 'Online' : 'Offline'),
       online,
@@ -204,7 +210,7 @@
     const unique = [...new Set((ids || []).filter(Boolean))];
     if (!unique.length) return [];
     const { data, error } = await client.from('profiles')
-      .select('id,handle,display_name,avatar_path,bio,status_text,presence,created_at')
+      .select('id,handle,display_name,avatar_path,banner_path,bio,status_text,presence,created_at')
       .in('id', unique);
     if (error) throw error;
     return data || [];
@@ -683,6 +689,24 @@
       throw error;
     }
     profile=data;
+    await loadAllData();
+  }
+
+  async function uploadProfileMedia(kind,file) {
+    if(!authUser || !file) return;
+    const column=kind==='avatar'?'avatar_path':kind==='banner'?'banner_path':null;
+    if(!column)throw new Error('Choose a profile picture or banner.');
+    if(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type))throw new Error('Use a PNG, JPG, WEBP, or GIF image.');
+    if(file.size>5*1024*1024)throw new Error('Images must be 5 MB or smaller.');
+    const extension=({ 'image/png':'png','image/jpeg':'jpg','image/webp':'webp','image/gif':'gif' })[file.type];
+    const path=authUser.id+'/'+kind+'-'+Date.now()+'.'+extension;
+    const {error:uploadError}=await client.storage.from('profile-media').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});
+    if(uploadError)throw uploadError;
+    const previousPath=profile?.[column];
+    const {data,error}=await client.from('profiles').update({[column]:path,updated_at:new Date().toISOString()}).eq('id',authUser.id).select().single();
+    if(error){await client.storage.from('profile-media').remove([path]).catch(()=>{});throw error;}
+    profile=data;
+    if(previousPath)await client.storage.from('profile-media').remove([previousPath]).catch(()=>{});
     await loadAllData();
   }
 
