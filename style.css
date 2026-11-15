@@ -1181,3 +1181,87 @@ aside .icon i { background-color: #111; }
   .mobile-app[data-theme="gradient"] main.mobile-content { background:transparent; }
   .mobile-app[data-theme="gradient"] .mobile-chat-screen { background:#080808; }
 }
+
+
+/* OLED mode: strict black-and-white surfaces, no colored UI accents */
+@media (max-width:750px) {
+  .mobile-app[data-theme="oled"] {
+    background:#000 !important;
+    color:#fff;
+    --oled-white:#fff;
+    --oled-muted:#a3a3a3;
+    --oled-line:#202020;
+  }
+  .mobile-app[data-theme="oled"] .mobile-topbar,
+  .mobile-app[data-theme="oled"] .mobile-tabbar,
+  .mobile-app[data-theme="oled"] .mobile-chat-header,
+  .mobile-app[data-theme="oled"] .mobile-composer,
+  .mobile-app[data-theme="oled"] .mobile-chat-screen,
+  .mobile-app[data-theme="oled"] main.mobile-content {
+    background:#000 !important;
+    border-color:#202020 !important;
+  }
+  .mobile-app[data-theme="oled"] .mobile-chat-heading strong,
+  .mobile-app[data-theme="oled"] .mobile-top-title strong,
+  .mobile-app[data-theme="oled"] .mobile-back,
+  .mobile-app[data-theme="oled"] .mobile-chat-action,
+  .mobile-app[data-theme="oled"] .composer-add,
+  .mobile-app[data-theme="oled"] .composer-emoji,
+  .mobile-app[data-theme="oled"] .mobile-tab.active,
+  .mobile-app[data-theme="oled"] .chat-profile-intro h2,
+  .mobile-app[data-theme="oled"] .chat-message-meta strong,
+  .mobile-app[data-theme="oled"] .chat-message-body p {
+    color:#fff !important;
+  }
+  .mobile-app[data-theme="oled"] .mobile-composer input,
+  .mobile-app[data-theme="oled"] .mobile-search,
+  .mobile-app[data-theme="oled"] .mobile-user-card,
+  .mobile-app[data-theme="oled"] .mobile-settings-group,
+  .mobile-app[data-theme="oled"] .mobile-tab.active,
+  .mobile-app[data-theme="oled"] .mobile-modal,
+  .mobile-app[data-theme="oled"] .modal-input {
+    background:#000 !important;
+    border-color:#292929 !important;
+    color:#fff !important;
+  }
+  .mobile-app[data-theme="oled"] .composer-send,
+  .mobile-app[data-theme="oled"] .modal-primary,
+  .mobile-app[data-theme="oled"] .chat-profile-button,
+  .mobile-app[data-theme="oled"] .mobile-user-card button,
+  .mobile-app[data-theme="oled"] .friend-message {
+    background:#171717 !important;
+    border:1px solid #333 !important;
+    color:#fff !important;
+    box-shadow:none !important;
+  }
+  .mobile-app[data-theme="oled"] .mobile-settings-group button,
+  .mobile-app[data-theme="oled"] .modal-list-action,
+  .mobile-app[data-theme="oled"] .modal-people button {
+    background:#000 !important;
+    color:#e5e5e5 !important;
+    border-color:#202020 !important;
+  }
+  .mobile-app[data-theme="oled"] .mobile-tab,
+  .mobile-app[data-theme="oled"] .mobile-dm-copy span,
+  .mobile-app[data-theme="oled"] .mobile-chat-heading span,
+  .mobile-app[data-theme="oled"] .appearance-heading span,
+  .mobile-app[data-theme="oled"] .appearance-note,
+  .mobile-app[data-theme="oled"] .modal-description {
+    color:#929292 !important;
+  }
+  .mobile-app[data-theme="oled"] .mobile-tab-dot,
+  .mobile-app[data-theme="oled"] .mobile-friend-tabs .add-friend-btn,
+  .mobile-app[data-theme="oled"] .mobile-logout {
+    background:#171717 !important;
+    border-color:#333 !important;
+    color:#fff !important;
+  }
+  .mobile-app[data-theme="oled"] .theme-check {
+    background:#fff !important;
+    color:#000 !important;
+  }
+  .mobile-app[data-theme="oled"] .appearance-theme-card.selected {
+    border-color:#fff !important;
+    box-shadow:0 0 0 1px #fff inset !important;
+  }
+}
