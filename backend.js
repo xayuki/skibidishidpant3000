@@ -496,17 +496,9 @@
     if(!conversationId){
       const userA=authUser.id<peerId?authUser.id:peerId;
       const userB=authUser.id<peerId?peerId:authUser.id;
-      const {data,error}=await client.from('dm_conversations')
-        .insert({user_a:userA,user_b:userB,created_by:authUser.id})
-        .select('id,user_a,user_b,created_at').single();
-      if(error && error.code!=='23505')throw error;
-      if(data){conversationId=data.id;}
-      else{
-        const {data:existing,error:lookupError}=await client.from('dm_conversations')
-          .select('id').eq('user_a',userA).eq('user_b',userB).single();
-        if(lookupError)throw lookupError;
-        conversationId=existing.id;
-      }
+      const {data,error}=await client.rpc('create_direct_conversation',{peer_id:peerId});
+      if(error)throw error;
+      conversationId=data;
       peer.conversationId=conversationId;
       peer.hasConversation=true;
       currentConversations.set(conversationId,{id:conversationId,user_a:userA,user_b:userB});
