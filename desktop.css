@@ -243,3 +243,53 @@
     #mobileApp .desktop-chat-workspace .mobile-chat-messages{padding-right:22px;padding-left:22px}
   }
 }
+
+/* Desktop theme variants mirror the same OLED / light / custom choices as mobile. */
+@media (min-width:751px) {
+  #mobileApp.xaynet-desktop-app[data-theme="light"] { background:#f2f3f5; color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"]>.desktop-rail,
+  #mobileApp.xaynet-desktop-app[data-theme="light"]>.desktop-sidebar-head { background:#fff; border-color:#dfe1e5; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"]>.desktop-sidebar-content { background:#f2f3f5; border-color:#dfe1e5; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-rail-brand { background:#f2f3f5; border-color:#dfe1e5; color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-rail-divider { background:#e1e3e7; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-rail .mobile-tab { color:#737780; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-rail .mobile-tab.active { background:#e4e5e9; border-color:#dfe1e5; color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-head .mobile-top-title strong,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-dm-copy strong { color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-head .mobile-top-title span,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-dm-copy span { color:#686d75; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-head .mobile-top-action,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-section-label button,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .friend-message { background:#fff; border-color:#dfe1e5; color:#555963; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-search { background:#fff; border-color:#dfe1e5; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-search input { color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-dm-row,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-friend-row { color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-dm-row:hover,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-friend-row:hover { background:#e4e5e9; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-friend-tabs button { background:#fff; border-color:#dfe1e5; color:#555963; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-friend-tabs button.selected,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-sidebar-content .mobile-friend-tabs button.add-friend-btn { background:#e4e5e9; color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"]>.desktop-chat-workspace { background:#f2f3f5; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-header { background:#fff; border-color:#dfe1e5; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-header .mobile-chat-heading strong,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-workspace .chat-message-meta strong { color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-header .mobile-chat-heading span,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-workspace .chat-message-meta time { color:#686d75; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-workspace .mobile-chat-messages { background:#f2f3f5; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-workspace .chat-message-body p { color:#30343b; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-actions .mobile-chat-action { color:#555963; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-workspace .mobile-composer { background:#fff!important; border-color:#dfe1e5!important; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-workspace .mobile-composer input { color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-workspace .composer-add,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-chat-workspace .composer-emoji { color:#555963; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-welcome { background:#f2f3f5; color:#686d75; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-welcome strong { color:#30343b; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-welcome-mark { background:#fff; border-color:#dfe1e5; color:#232428; }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .mobile-modal { background:#fff; border-color:#dfe1e5; }
+  #mobileApp.xaynet-desktop-app[data-theme="gradient"] { background:var(--custom-gradient); }
+  #mobileApp.xaynet-desktop-app[data-theme="gradient"]>.desktop-rail,
+  #mobileApp.xaynet-desktop-app[data-theme="gradient"]>.desktop-sidebar-head { background:#080808e8; }
+  #mobileApp.xaynet-desktop-app[data-theme="gradient"]>.desktop-sidebar-content { background:transparent; }
+  #mobileApp.xaynet-desktop-app[data-theme="gradient"] .desktop-welcome { background:transparent; }
+}
