@@ -25,6 +25,7 @@
     '<header class="mobile-topbar desktop-sidebar-head"><div class="mobile-top-title"><strong id="mobileTitle">Messages</strong><span id="mobileSubtitle">Your conversations</span></div><button class="mobile-top-action" id="mobileNew" type="button" aria-label="New message" title="New message"><i class="fa-solid fa-pen-to-square"></i></button></header>' +
     '<main class="mobile-content desktop-sidebar-content" id="mobileContent"></main>' +
     '<section class="desktop-welcome" id="desktopWelcome"><div class="desktop-welcome-mark">X</div><strong>your space, your people.</strong><span>select a conversation to pick up where you left off.</span></section>' +
+    '<section class="desktop-main-view" id="desktopMainView" hidden></section>' +
     '<section class="mobile-chat-screen desktop-chat-workspace" id="mobileChatScreen" aria-hidden="true">' +
       '<header class="mobile-chat-header desktop-chat-header">' +
         '<span class="mobile-avatar-wrap chat-header-avatar"><img id="mobileChatAvatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt=""><i id="mobileChatPresence" class="offline"></i></span>' +
@@ -36,8 +37,15 @@
     '</section>' +
     '<div class="mobile-modal-backdrop" id="mobileModalBackdrop"><section class="mobile-modal" id="mobileModal" role="dialog" aria-modal="true"></section></div>';
   const welcome = document.getElementById('desktopWelcome');
-  window.addEventListener('xaynet:open-chat', () => { if (welcome) welcome.hidden = true; });
-  window.addEventListener('xaynet:close-chat', () => { if (welcome) welcome.hidden = false; });
+  const mainView = document.getElementById('desktopMainView');
+  window.addEventListener('xaynet:open-chat', () => {
+    if (mainView) { mainView.hidden = true; mainView.innerHTML = ''; }
+    if (welcome) welcome.hidden = true;
+  });
+  window.addEventListener('xaynet:close-chat', () => {
+    if (mainView) { mainView.hidden = true; mainView.innerHTML = ''; }
+    if (welcome) welcome.hidden = false;
+  });
   let wasDesktop = true;
   desktopQuery.addEventListener?.('change', event => {
     if (event.matches !== wasDesktop) window.location.reload();
