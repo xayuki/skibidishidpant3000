@@ -98,6 +98,24 @@
   quick.addEventListener('pointercancel',finishDrag);
   quick.addEventListener('click',e=>{if(dragged){e.preventDefault();e.stopImmediatePropagation();dragged=false;return;}lock();});
   document.body.appendChild(quick);
+
+  // Temporary desktop-layout preview for phones. The query flag is removed to return to normal mobile.
+  const previewMode = new URLSearchParams(location.search).get('desktopPreview') === '1';
+  if (window.screen && window.screen.width <= 750) {
+    const preview = document.createElement('button');
+    preview.type = 'button';
+    preview.className = 'desktop-preview-floater';
+    preview.setAttribute('aria-label', previewMode ? 'Return to mobile layout' : 'Preview desktop layout');
+    preview.title = previewMode ? 'Return to mobile layout' : 'Preview desktop layout';
+    preview.innerHTML = previewMode ? '<i class="fa-solid fa-mobile-screen-button"></i>' : '<i class="fa-solid fa-desktop"></i>';
+    preview.addEventListener('click', () => {
+      const url = new URL(location.href);
+      if (previewMode) url.searchParams.delete('desktopPreview');
+      else url.searchParams.set('desktopPreview', '1');
+      location.assign(url.toString());
+    });
+    document.body.appendChild(preview);
+  }
   restoreButtonPosition();
   window.addEventListener('resize',restoreButtonPosition);
 
