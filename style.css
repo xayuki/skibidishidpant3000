@@ -2600,3 +2600,16 @@ body.xaynet-authenticated .cloak-quick-lock{display:flex}
     #mobileApp .mobile-composer { width: calc(100% - 32px); }
   }
 }
+
+
+/* Temporary phone floater for switching between mobile and desktop preview. */
+.desktop-preview-floater{
+  position:fixed;right:14px;top:176px;z-index:99989;width:46px;height:46px;
+  display:flex;align-items:center;justify-content:center;border:1px solid #343434;
+  border-radius:50%;background:#080808;color:#f4f4f4;font-size:16px;
+  box-shadow:0 8px 28px #0009;cursor:pointer;touch-action:manipulation
+}
+.desktop-preview-floater:active{transform:scale(.96)}
+body.xaynet-authenticated:not(.xaynet-desktop-preview) .desktop-preview-floater{display:flex}
+body.xaynet-desktop-preview .desktop-preview-floater{display:flex}
+@media(min-width:751px){body:not(.xaynet-desktop-preview) .desktop-preview-floater{display:none}}
