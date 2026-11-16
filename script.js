@@ -26,6 +26,22 @@
   const person = id => people.find(p=>p.id===id);
   const presenceClass = p => p.online ? 'online' : 'offline';
   const setHeader = (title,sub='') => { $('#mobileTitle').textContent=title; $('#mobileSubtitle').textContent=sub; };
+  const isDesktopLayout = () => !!$('#mobileApp')?.classList.contains('xaynet-desktop-app');
+  const renderDesktopMain = markup => {
+    if (!isDesktopLayout()) return false;
+    const view=$('#desktopMainView');
+    if (!view) return false;
+    view.innerHTML=markup;
+    view.hidden=false;
+    if ($('#desktopWelcome')) $('#desktopWelcome').hidden=true;
+    $('#mobileChatScreen')?.classList.remove('open');
+    return true;
+  };
+  const closeDesktopMain = () => {
+    const view=$('#desktopMainView');
+    if (view) { view.hidden=true; view.innerHTML=''; }
+    if ($('#desktopWelcome')) $('#desktopWelcome').hidden=!!current;
+  };
   const openChat = id => {
     const p=person(id); if(!p) return;
     current=id;
@@ -123,7 +139,7 @@
     grab.addEventListener('pointercancel',finish);
   };
   const closeModal = () => { $('#mobileModal').style.transform=''; $('#mobileModalBackdrop').classList.remove('show'); };
-  const closeProfileSheet = () => { const sheet=$('.mobile-profile-sheet-backdrop'); if(sheet)sheet.remove(); };
+  const closeProfileSheet = () => { const sheet=$('.mobile-profile-sheet-backdrop'); if(sheet)sheet.remove(); if(isDesktopLayout())closeDesktopMain(); };
   const renderMessages = () => {
     setHeader('Messages','Your conversations');
     const topAction=$('#mobileNew');
@@ -177,7 +193,7 @@
     const rows=notificationItems;
     const topAction=$('#mobileNew');
     if(topAction){topAction.hidden=!rows.length;topAction.setAttribute('aria-label','Clear activity');topAction.title='Clear activity';topAction.innerHTML='<i class="fa-solid fa-trash-can"></i>';topAction.onclick=async()=>{if(!notificationItems.length)return;topAction.disabled=true;try{await window.XaynetBackend.clearActivity();}catch(error){openModal('Could not clear activity','<p class="modal-description">'+esc(error.message||'Try again.')+'</p>');}finally{topAction.disabled=false;}};}
-    $('#mobileContent').innerHTML=rows.length?`
+    const activityMarkup=rows.length?`
       <div class="mobile-section-label"><span>RECENT</span></div>
       <div class="mobile-dm-list">${rows.map(n=>`<button class="mobile-dm-row notification-row" data-notification-id="${n.id}">
         <span class="mobile-avatar-wrap"><img src="${n.actor?.image||avatar}" alt=""><i class="${n.read_at?'offline':'online'}"></i></span>
@@ -185,6 +201,7 @@
         ${n.read_at?'':'<b class="mobile-dm-unread">NEW</b>'}
       </button>`).join('')}</div>`
       :'<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>';
+    if(!renderDesktopMain(activityMarkup)) $('#mobileContent').innerHTML=activityMarkup;
   };
   const renderYou = () => { const topAction=$('#mobileNew');if(topAction){topAction.hidden=false;topAction.setAttribute('aria-label','New message');topAction.title='New message';topAction.innerHTML='<i class="fa-solid fa-pen-to-square"></i>';topAction.onclick=showNewMessage;}if(youView==='appearance'){renderAppearance();return;}renderProfile(null); };
   const renderProfile = (profileId) => {
@@ -197,7 +214,10 @@
       '<section class="profile-hero-card"><div class="profile-banner"'+(p.banner?' style="background-image:url(\''+esc(p.banner)+'\')"' : '')+'><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><div class="profile-identity"><strong>'+esc(p.name)+(p.id==='39aafa7c-9d05-4746-a221-86bb48dc8eb8'||p.id==='6b6a2529-532f-471a-a80c-71a56477334b'?' <span class="xaynet-owner-badge">FOUNDER</span>':'')+'</strong><span>@'+esc(p.handle||'')+'</span></div><div class="profile-actions">'+(self?'':p.friendState==='friend'?'<button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button>':'')+'<button id="'+(self?'editProfile':p.friendState==='friend'?'profileRemoveFriend':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':p.friendState==='friend'?'fa-user-minus':'fa-user-plus')+'"></i> '+(self?'Edit Profile':p.friendState==='friend'?'Remove Friend':'Add Friend')+'</button></div></div></section>'+
       '<section class="profile-info-card"><div class="profile-card-heading">MEMBER SINCE</div><div class="profile-member-date"><i class="fa-regular fa-calendar"></i><span>'+(p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'}):'Recently joined')+'</span></div></section><section class="profile-info-card"><div class="profile-card-heading">CONNECTIONS</div>'+connection+'</section>'+
       '<button class="profile-info-card profile-friends-card" id="profileFriends"><span class="profile-card-heading">FRIENDS <small>'+friends.length+'</small></span><span class="profile-friends-row"><span class="profile-friend-stack">'+pics+'</span><i class="fa-solid fa-chevron-right"></i></span></button>'+(self&&window.XaynetBackend?.isAdmin?.()?'<button class="profile-info-card xaynet-admin-entry" id="openAdminPanel"><span><strong>Admin Panel</strong><small>Temporary server controls</small></span><i class="fa-solid fa-chevron-right"></i></button>':'')+'</section>';
-    if(self) {
+    if(isDesktopLayout()) {
+      closeProfileSheet();
+      renderDesktopMain(profileMarkup);
+    } else if(self) {
       $('#mobileContent').innerHTML=profileMarkup;
     } else {
       closeProfileSheet();
@@ -229,12 +249,22 @@
     else $('#profileAddFriend').onclick=async()=>{try{await window.XaynetBackend.sendFriendRequest(p.handle);closeProfileSheet();}catch(err){openModal('Friend request','<p class="modal-description">'+esc(err.message||'Could not send request.')+'</p><button class="modal-primary" id="doneSetting">Okay</button>');}};
     $('#profileFriends').onclick=()=>openModal('Friends','<div class="modal-people">'+friends.map(x=>'<button data-friend-chat="'+x.id+'"><img src="'+x.image+'"><span>'+esc(x.name)+'</span><i class="fa-solid fa-chevron-right"></i></button>').join('')+'</div>');
     $('#profileMore').onclick=()=>openModal('Profile options',(self?'<button class="modal-list-action" id="profileEditOption">Edit Profile</button><button class="modal-list-action" id="profileAppearanceOption">Appearance</button><button class="modal-list-action" id="profileCloakSettings">Cloak Settings</button>'+'<button class="modal-list-action" id="profileSignOut">Sign Out</button>':'<button class="modal-list-action" id="profileMessageOption">Message</button>')+'<button class="modal-list-action" id="profileBackOption">Back</button>');
-    if(!self)$('#profileBack').onclick=closeProfileSheet;
+    if(!self)$('#profileBack').onclick=()=>{
+      if(!isDesktopLayout()){closeProfileSheet();return;}
+      closeDesktopMain();
+      if(current){
+        $('#mobileChatScreen').classList.add('open');
+        $('#mobileChatScreen').setAttribute('aria-hidden','false');
+      } else {
+        tab=profileReturnTab;
+        render();
+      }
+    };
   };
   const renderAppearance = () => {
     setHeader('Appearance','Make the app look the way you want');
     const selected = themeSettings.mode;
-    $('#mobileContent').innerHTML = `
+    const appearanceMarkup = `
       <button class="appearance-back" id="appearanceBack"><i class="fa-solid fa-chevron-left"></i><span>Settings</span></button>
       <section class="appearance-section">
         <div class="appearance-heading"><strong>Theme</strong><span>Choose your interface style</span></div>
@@ -266,6 +296,7 @@
       </section>
       <p class="appearance-note">Your theme is saved on this device.</p>
     `;
+    if(!renderDesktopMain(appearanceMarkup)) $('#mobileContent').innerHTML=appearanceMarkup;
     const updatePreview = () => {
       const c1=$('#gradientColor1').value, c2=$('#gradientColor2').value, angle=Number($('#gradientAngle').value);
       $('#gradientAngleValue').textContent=angle+'°';
@@ -359,6 +390,10 @@
   $('#composerAdd').onclick=null;
   $('#composerEmoji').onclick=()=>{$('#mobileMessageInput').value+=' 🙂 ';$('#mobileMessageInput').focus();};
   $('#mobileModalBackdrop').addEventListener('click',e=>{if(e.target.id==='mobileModalBackdrop')closeModal();});
+  document.addEventListener('click',e=>{
+    const notice=e.target.closest('[data-notification-id]');
+    if(notice&&isDesktopLayout()) window.XaynetBackend.openNotification(notice.dataset.notificationId);
+  });
   $('#mobileContent').addEventListener('click',async e=>{
     const addFriendButton=e.target.closest('#addFriend');
     if(addFriendButton){
