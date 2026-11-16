@@ -1,0 +1,234 @@
+/* XAYNET desktop: independent presentation, shared app behavior and backend. */
+@media (min-width: 751px) {
+  html,body{width:100%;height:100%;min-height:100%;margin:0;overflow:hidden;background:#000}
+  body{color:#f2f3f5;font-family:"Nunito Sans",Arial,sans-serif}
+  #mobileApp.xaynet-desktop-app{
+    --xyd-rail:76px;--xyd-sidebar:clamp(270px,23vw,330px);
+    position:fixed;inset:0;z-index:2000;display:grid!important;
+    grid-template-columns:var(--xyd-rail) var(--xyd-sidebar) minmax(0,1fr);
+    grid-template-rows:64px minmax(0,1fr);width:100%;height:100vh;height:100dvh;
+    min-width:0;min-height:0;overflow:hidden;isolation:isolate;background:#000;color:#f2f3f5
+  }
+  #mobileApp.xaynet-desktop-app *,#mobileApp.xaynet-desktop-app *::before,#mobileApp.xaynet-desktop-app *::after{box-sizing:border-box}
+  #mobileApp.xaynet-desktop-app button,#mobileApp.xaynet-desktop-app input,#mobileApp.xaynet-desktop-app textarea,#mobileApp.xaynet-desktop-app select{font:inherit}
+  #mobileApp.xaynet-desktop-app>.desktop-rail{
+    grid-column:1;grid-row:1/3;position:relative;z-index:4;display:flex!important;
+    flex-direction:column;align-items:center;gap:10px;width:var(--xyd-rail);height:100%;
+    min-width:0;margin:0;padding:16px 9px 14px;overflow:hidden;border:0;
+    border-right:1px solid #202020;border-radius:0;background:#080808
+  }
+  #mobileApp .desktop-rail-brand{
+    display:grid;place-items:center;flex:0 0 46px;width:46px;height:46px;margin:0 0 7px;
+    border:1px solid #303030;border-radius:14px;background:#171717;color:#fff;
+    font-size:22px;font-weight:900;cursor:pointer
+  }
+  #mobileApp .desktop-rail-divider{flex:0 0 1px;width:40px;margin:0 0 3px;background:#242424}
+  #mobileApp .desktop-rail .mobile-tab{
+    position:relative;display:flex;flex:0 0 58px;flex-direction:column;align-items:center;
+    justify-content:center;gap:5px;width:58px;min-width:58px;height:58px;min-height:58px;
+    margin:0;padding:4px 2px;border:1px solid transparent;border-radius:13px;
+    background:transparent;color:#929292;font-size:10px;font-weight:700;cursor:pointer;
+    transition:background .15s ease,color .15s ease,border-color .15s ease
+  }
+  #mobileApp .desktop-rail .mobile-tab i{font-size:19px}
+  #mobileApp .desktop-rail .mobile-tab:hover{background:#151515;color:#eee}
+  #mobileApp .desktop-rail .mobile-tab.active{border-color:#303030;background:#1b1b1b;color:#fff}
+  #mobileApp .desktop-rail .desktop-rail-you{margin-top:auto}
+  #mobileApp .desktop-rail .mobile-tab-avatar,#mobileApp .desktop-rail .mobile-tab-avatar img{
+    display:block;width:30px;height:30px;border-radius:50%!important;object-fit:cover
+  }
+  #mobileApp .desktop-rail .mobile-tab-dot,#mobileApp .desktop-rail .mobile-friends-dot,#mobileApp .desktop-rail .mobile-message-dot{
+    position:absolute;top:7px;right:8px;width:8px;height:8px;border:2px solid #080808;
+    border-radius:50%;background:#ed4245
+  }
+
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-head{
+    grid-column:2;grid-row:1;position:relative;z-index:3;display:flex;align-items:center;gap:10px;
+    width:100%;height:64px;min-height:64px;margin:0;padding:0 16px;border:0;
+    border-right:1px solid #202020;border-bottom:1px solid #202020;border-radius:0;background:#080808
+  }
+  #mobileApp .desktop-sidebar-head .mobile-top-title{
+    display:flex;flex:1 1 auto;flex-direction:column;align-items:flex-start;justify-content:center;
+    min-width:0;gap:2px;line-height:1.2
+  }
+  #mobileApp .desktop-sidebar-head .mobile-top-title strong{display:block;color:#f2f3f5;font-size:15px;line-height:19px;font-weight:800}
+  #mobileApp .desktop-sidebar-head .mobile-top-title span{display:block;color:#858585;font-size:11px;line-height:15px}
+  #mobileApp .desktop-sidebar-head .mobile-top-action{
+    display:grid;flex:0 0 36px;place-items:center;width:36px;height:36px;border:1px solid #292929;
+    border-radius:9px;background:#141414;color:#ddd;cursor:pointer
+  }
+  #mobileApp .desktop-sidebar-head .mobile-top-action:hover{background:#202020;color:#fff}
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content{
+    grid-column:2;grid-row:2;position:relative;z-index:1;display:block;width:100%;height:100%;
+    min-width:0;min-height:0;margin:0;padding:14px 12px 22px;overflow-x:hidden;overflow-y:auto;
+    border:0;border-right:1px solid #202020;border-radius:0;background:#080808;
+    scrollbar-width:thin;scrollbar-color:#333 transparent
+  }
+  #mobileApp .desktop-sidebar-content .mobile-search{
+    display:flex;align-items:center;gap:9px;width:100%;min-height:40px;margin:0 0 19px;
+    padding:0 11px;border:1px solid #292929;border-radius:8px;background:#121212;color:#888
+  }
+  #mobileApp .desktop-sidebar-content .mobile-search input{
+    flex:1;min-width:0;width:100%;height:36px;padding:0;border:0;outline:0;
+    background:transparent;color:#eee;font-size:12px
+  }
+  #mobileApp .desktop-sidebar-content .mobile-section-label{
+    display:flex;align-items:center;justify-content:space-between;min-height:27px;
+    margin:0 3px 9px;color:#858585;font-size:10px;font-weight:700;letter-spacing:.08em
+  }
+  #mobileApp .desktop-sidebar-content .mobile-section-label button{
+    display:grid;place-items:center;width:25px;height:25px;border:1px solid #303030;
+    border-radius:7px;background:#171717;color:#bbb;cursor:pointer
+  }
+  #mobileApp .desktop-sidebar-content .mobile-dm-list{display:flex;flex-direction:column;gap:3px;width:100%}
+  #mobileApp .desktop-sidebar-content .mobile-dm-row,#mobileApp .desktop-sidebar-content .mobile-friend-row{
+    display:flex;align-items:center;gap:11px;width:100%;min-width:0;min-height:62px;
+    margin:0;padding:9px 8px;border:1px solid transparent;border-radius:9px;
+    background:transparent;color:#eee;text-align:left;cursor:pointer
+  }
+  #mobileApp .desktop-sidebar-content .mobile-dm-row:hover,#mobileApp .desktop-sidebar-content .mobile-friend-row:hover{background:#151515}
+  #mobileApp .desktop-sidebar-content .mobile-avatar-wrap{
+    position:relative;display:block;flex:0 0 42px;width:42px;height:42px;overflow:visible
+  }
+  #mobileApp .desktop-sidebar-content .mobile-avatar-wrap>img{
+    display:block;width:42px;height:42px;aspect-ratio:1;object-fit:cover;border-radius:50%!important
+  }
+  #mobileApp .desktop-sidebar-content .mobile-avatar-wrap>i{
+    position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border:2px solid #080808;border-radius:50%
+  }
+  #mobileApp .desktop-sidebar-content .mobile-dm-copy{
+    display:flex;flex:1 1 auto;flex-direction:column;justify-content:center;min-width:0;min-height:42px;gap:3px
+  }
+  #mobileApp .desktop-sidebar-content .mobile-dm-copy strong{
+    display:block;overflow:hidden;color:#eee;font-size:12px;line-height:17px;font-weight:700;
+    text-overflow:ellipsis;white-space:nowrap
+  }
+  #mobileApp .desktop-sidebar-content .mobile-dm-copy span{
+    display:block;overflow:hidden;color:#858585;font-size:11px;line-height:15px;
+    text-overflow:ellipsis;white-space:nowrap
+  }
+  #mobileApp .desktop-sidebar-content .mobile-row-chevron{color:#666;font-size:10px}
+  #mobileApp .desktop-sidebar-content .mobile-dm-unread{padding:2px 6px;border-radius:10px;background:#ed4245;color:#fff;font-size:10px}
+  #mobileApp .desktop-sidebar-content .mobile-empty{padding:18px 8px;color:#777;font-size:12px;text-align:center}
+  #mobileApp .desktop-sidebar-content .mobile-friend-tabs{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 16px}
+  #mobileApp .desktop-sidebar-content .mobile-friend-tabs button{
+    min-height:30px;padding:0 9px;border:1px solid #292929;border-radius:7px;background:#111;color:#999;font-size:10px;cursor:pointer
+  }
+  #mobileApp .desktop-sidebar-content .mobile-friend-tabs button.selected,
+  #mobileApp .desktop-sidebar-content .mobile-friend-tabs button.add-friend-btn{border-color:#3a3a3a;background:#202020;color:#eee}
+  #mobileApp .desktop-sidebar-content .mobile-friend-row .friend-actions{display:flex;gap:5px}
+  #mobileApp .desktop-sidebar-content .friend-message{
+    display:grid;place-items:center;width:30px;height:30px;border:1px solid #303030;
+    border-radius:7px;background:#171717;color:#ccc;cursor:pointer
+  }
+  #mobileApp .desktop-sidebar-content .mobile-empty-state{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;color:#777;text-align:center
+  }
+  #mobileApp .desktop-sidebar-content .mobile-empty-state i{font-size:26px}
+  #mobileApp .desktop-sidebar-content .mobile-empty-state h2{margin:14px 0 5px;color:#ddd;font-size:15px}
+  #mobileApp .desktop-sidebar-content .mobile-empty-state p{max-width:220px;font-size:11px;line-height:1.5}
+
+  #mobileApp.xaynet-desktop-app>.desktop-chat-workspace{
+    grid-column:3;grid-row:1/3;position:relative;z-index:2;display:none;flex-direction:column;
+    align-items:stretch;justify-content:flex-start;width:100%;height:100%;min-width:0;min-height:0;
+    margin:0;padding:0;overflow:hidden;border:0;border-radius:0;background:#000
+  }
+  #mobileApp.xaynet-desktop-app>.desktop-chat-workspace.open{display:flex}
+  #mobileApp .desktop-chat-header{
+    display:flex;flex:0 0 64px;align-items:center;gap:12px;width:100%;height:64px;min-height:64px;
+    margin:0;padding:0 22px;border:0;border-bottom:1px solid #202020;border-radius:0;background:#080808
+  }
+  #mobileApp .desktop-chat-header .chat-header-avatar{position:relative;flex:0 0 38px;width:38px;height:38px;overflow:visible}
+  #mobileApp .desktop-chat-header .chat-header-avatar img{display:block;width:38px;height:38px;border-radius:50%!important;object-fit:cover}
+  #mobileApp .desktop-chat-header .chat-header-avatar i{
+    position:absolute;right:-1px;bottom:-1px;width:11px;height:11px;border:2px solid #080808;border-radius:50%
+  }
+  #mobileApp .desktop-chat-header .mobile-chat-heading{
+    display:flex;flex:1 1 auto;flex-direction:column;justify-content:center;min-width:0;gap:2px
+  }
+  #mobileApp .desktop-chat-header .mobile-chat-heading strong{
+    overflow:hidden;color:#f2f3f5;font-size:14px;line-height:19px;font-weight:750;text-overflow:ellipsis;white-space:nowrap
+  }
+  #mobileApp .desktop-chat-header .mobile-chat-heading span{color:#929292;font-size:11px;line-height:15px}
+  #mobileApp .desktop-chat-actions{display:flex;align-items:center;gap:7px}
+  #mobileApp .desktop-chat-actions .mobile-chat-action{
+    display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border:1px solid transparent;
+    border-radius:8px;background:transparent;color:#aaa;cursor:pointer
+  }
+  #mobileApp .desktop-chat-actions .mobile-chat-action:hover{border-color:#303030;background:#191919;color:#fff}
+  #mobileApp .desktop-chat-workspace .mobile-chat-messages{
+    display:block;flex:1 1 auto;width:100%;min-width:0;min-height:0;margin:0;
+    padding:24px clamp(24px,3.2vw,54px) 28px;overflow-x:hidden;overflow-y:auto;background:#000;
+    scrollbar-width:thin;scrollbar-color:#333 transparent
+  }
+  #mobileApp .desktop-chat-workspace .chat-profile-intro{width:100%;max-width:980px;margin:26px auto 24px}
+  #mobileApp .desktop-chat-workspace .chat-profile-avatar{
+    width:72px;height:72px;margin-bottom:14px;overflow:hidden;border-radius:50%!important
+  }
+  #mobileApp .desktop-chat-workspace .chat-profile-avatar img{display:block;width:100%;height:100%;border-radius:50%!important;object-fit:cover}
+  #mobileApp .desktop-chat-workspace .chat-message{
+    display:flex;align-items:flex-start;gap:12px;width:100%;min-width:0;margin:0;padding:6px 0;border:0;background:transparent
+  }
+  #mobileApp .desktop-chat-workspace .chat-message>img{
+    display:block;flex:0 0 38px;width:38px;height:38px;border-radius:50%!important;object-fit:cover;aspect-ratio:1
+  }
+  #mobileApp .desktop-chat-workspace .chat-message.grouped>img{display:none}
+  #mobileApp .desktop-chat-workspace .chat-message.grouped .chat-message-body{margin-left:50px}
+  #mobileApp .desktop-chat-workspace .chat-message-body{flex:1 1 auto;min-width:0;max-width:none}
+  #mobileApp .desktop-chat-workspace .chat-message-body p{
+    margin:0;color:#dbdee1;font-size:14px;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap
+  }
+  #mobileApp .desktop-chat-workspace .chat-message-meta{display:flex;align-items:baseline;gap:8px;margin:0 0 3px}
+  #mobileApp .desktop-chat-workspace .chat-message-meta strong{color:#f2f3f5;font-size:13px;font-weight:700}
+  #mobileApp .desktop-chat-workspace .chat-message-meta time{color:#777;font-size:10px}
+  #mobileApp .desktop-chat-workspace .chat-day-divider{display:flex;align-items:center;gap:14px;margin:22px 0;color:#777;font-size:10px}
+  #mobileApp .desktop-chat-workspace .chat-day-divider:before,#mobileApp .desktop-chat-workspace .chat-day-divider:after{content:"";flex:1;height:1px;background:#242424}
+  #mobileApp .desktop-chat-workspace .mobile-typing-indicator,#mobileApp .desktop-chat-workspace .mobile-reply-preview{
+    flex:0 0 auto;width:100%;max-width:1120px;align-self:center;padding-right:24px;padding-left:24px
+  }
+  #mobileApp .desktop-chat-workspace .mobile-reply-preview{margin:0 0 7px}
+  #mobileApp .desktop-chat-workspace .mobile-composer{
+    display:flex;flex:0 0 auto;align-items:center;gap:10px;width:calc(100% - 48px);max-width:1120px;
+    min-width:0;min-height:58px;align-self:center;margin:0 auto 16px;padding:8px 12px;
+    border:1px solid #292929!important;border-radius:10px;background:#0d0d0d!important;box-shadow:none
+  }
+  #mobileApp .desktop-chat-workspace .mobile-composer input{
+    display:block;flex:1 1 auto;width:100%;min-width:0;height:40px;padding:0 10px;
+    border:0!important;outline:0;background:transparent!important;color:#f2f3f5;box-shadow:none!important;font-size:13px
+  }
+  #mobileApp .desktop-chat-workspace .composer-add,#mobileApp .desktop-chat-workspace .composer-emoji,#mobileApp .desktop-chat-workspace .composer-send{
+    display:grid;flex:0 0 34px;place-items:center;width:34px;height:34px;border:0;border-radius:8px;background:transparent;color:#aaa;cursor:pointer
+  }
+  #mobileApp .desktop-chat-workspace .composer-send{border:1px solid #303030;background:#171717;color:#fff}
+  #mobileApp .desktop-chat-workspace .composer-add:hover,#mobileApp .desktop-chat-workspace .composer-emoji:hover{background:#1b1b1b;color:#fff}
+
+  #mobileApp .mobile-profile-page{width:100%;max-width:920px;margin:0 auto}
+  #mobileApp .profile-hero-card,#mobileApp .profile-info-card{max-width:100%}
+  #mobileApp .profile-large-avatar,#mobileApp .profile-large-avatar img{width:72px;height:72px;border-radius:50%!important;object-fit:cover}
+  #mobileApp .mobile-profile-sheet-backdrop{
+    position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:28px;background:rgba(0,0,0,.72)
+  }
+  #mobileApp .mobile-profile-sheet{
+    width:min(760px,100%);max-height:min(88vh,900px);overflow:auto;border:1px solid #292929;border-radius:14px;background:#080808
+  }
+  #mobileApp .mobile-profile-sheet-content{padding:18px}
+  #mobileApp .mobile-profile-sheet .profile-sheet-grab-area{display:none}
+
+  #mobileApp .mobile-modal-backdrop{
+    position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.72)
+  }
+  #mobileApp .mobile-modal-backdrop.show{display:flex}
+  #mobileApp .mobile-modal{
+    width:min(540px,100%);max-height:min(84vh,780px);overflow:auto;border:1px solid #292929;border-radius:14px;background:#080808
+  }
+  #mobileApp .mobile-modal-grab-area{display:none}
+  #mobileApp .mobile-modal-content{padding:22px 24px 26px}
+  #xayCallDock{z-index:5000}
+
+  @media (min-width:751px) and (max-width:1050px){
+    #mobileApp.xaynet-desktop-app{--xyd-rail:68px;--xyd-sidebar:252px}
+    #mobileApp .desktop-sidebar-content{padding-right:9px;padding-left:9px}
+    #mobileApp .desktop-chat-header{padding-right:16px;padding-left:16px}
+    #mobileApp .desktop-chat-workspace .mobile-chat-messages{padding-right:22px;padding-left:22px}
+  }
+}
