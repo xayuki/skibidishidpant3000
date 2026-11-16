@@ -1,6 +1,13 @@
 (() => {
   'use strict';
-  const desktopQuery = window.matchMedia('(min-width: 751px)');
+  const params = new URLSearchParams(window.location.search);
+  const previewMode = params.get('desktopPreview') === '1';
+  if (previewMode) {
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) viewport.setAttribute('content', 'width=1280, initial-scale=0.35, maximum-scale=2, viewport-fit=cover');
+    document.body.classList.add('xaynet-desktop-preview');
+  }
+  const desktopQuery = window.matchMedia(previewMode ? '(min-width: 0px)' : '(min-width: 751px)');
   if (!desktopQuery.matches) return;
   const app = document.getElementById('mobileApp');
   if (!app) return;
