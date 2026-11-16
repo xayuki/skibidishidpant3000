@@ -202,6 +202,7 @@
       </button>`).join('')}</div>`
       :'<div class="mobile-empty-state"><i class="fa-regular fa-bell"></i><h2>All caught up</h2><p>You’re all clear. New notifications will show up here.</p></div>';
     if(!renderDesktopMain(activityMarkup)) $('#mobileContent').innerHTML=activityMarkup;
+    else $('#mobileContent').innerHTML='';
   };
   const renderYou = () => { const topAction=$('#mobileNew');if(topAction){topAction.hidden=false;topAction.setAttribute('aria-label','New message');topAction.title='New message';topAction.innerHTML='<i class="fa-solid fa-pen-to-square"></i>';topAction.onclick=showNewMessage;}if(youView==='appearance'){renderAppearance();return;}renderProfile(null); };
   const renderProfile = (profileId) => {
@@ -213,9 +214,11 @@
     const profileMarkup='<section class="mobile-profile-page" data-profile-id="'+p.id+'"><div class="profile-utility-row">'+(self?'':'<button class="profile-back-button" id="profileBack" aria-label="Back"><i class="fa-solid fa-chevron-left"></i></button>')+'<span class="profile-presence-label"><i></i> '+(p.online?'ONLINE NOW':esc(p.status).toUpperCase())+'</span><div class="profile-quick-actions"><span class="profile-quick-pill">'+(self?'MY PROFILE':'PROFILE')+'</span><button id="profileMore"><i class="fa-solid fa-ellipsis"></i></button></div></div>'+
       '<section class="profile-hero-card"><div class="profile-banner"'+(p.banner?' style="background-image:url(\''+esc(p.banner)+'\')"' : '')+'><span class="profile-banner-mark">X</span></div><div class="profile-hero-content"><span class="mobile-avatar-wrap profile-large-avatar"><img src="'+p.image+'" alt=""><i class="'+presenceClass(p)+'"></i></span><div class="profile-identity"><strong>'+esc(p.name)+(p.id==='39aafa7c-9d05-4746-a221-86bb48dc8eb8'||p.id==='6b6a2529-532f-471a-a80c-71a56477334b'?' <span class="xaynet-owner-badge">FOUNDER</span>':'')+'</strong><span>@'+esc(p.handle||'')+'</span></div><div class="profile-actions">'+(self?'':p.friendState==='friend'?'<button id="profileMessage"><i class="fa-regular fa-comment"></i> Message</button>':'')+'<button id="'+(self?'editProfile':p.friendState==='friend'?'profileRemoveFriend':'profileAddFriend')+'"><i class="fa-solid '+(self?'fa-pen':p.friendState==='friend'?'fa-user-minus':'fa-user-plus')+'"></i> '+(self?'Edit Profile':p.friendState==='friend'?'Remove Friend':'Add Friend')+'</button></div></div></section>'+
       '<section class="profile-info-card"><div class="profile-card-heading">MEMBER SINCE</div><div class="profile-member-date"><i class="fa-regular fa-calendar"></i><span>'+(p.created_at?new Date(p.created_at).toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'}):'Recently joined')+'</span></div></section><section class="profile-info-card"><div class="profile-card-heading">CONNECTIONS</div>'+connection+'</section>'+
+      (p.bio?'<section class="profile-info-card profile-bio-card"><div class="profile-card-heading">ABOUT ME</div><p>'+esc(p.bio)+'</p></section>':'')+
       '<button class="profile-info-card profile-friends-card" id="profileFriends"><span class="profile-card-heading">FRIENDS <small>'+friends.length+'</small></span><span class="profile-friends-row"><span class="profile-friend-stack">'+pics+'</span><i class="fa-solid fa-chevron-right"></i></span></button>'+(self&&window.XaynetBackend?.isAdmin?.()?'<button class="profile-info-card xaynet-admin-entry" id="openAdminPanel"><span><strong>Admin Panel</strong><small>Temporary server controls</small></span><i class="fa-solid fa-chevron-right"></i></button>':'')+'</section>';
     if(isDesktopLayout()) {
       closeProfileSheet();
+      if(self) $('#mobileContent').innerHTML='';
       renderDesktopMain(profileMarkup);
     } else if(self) {
       $('#mobileContent').innerHTML=profileMarkup;
@@ -297,6 +300,7 @@
       <p class="appearance-note">Your theme is saved on this device.</p>
     `;
     if(!renderDesktopMain(appearanceMarkup)) $('#mobileContent').innerHTML=appearanceMarkup;
+    else $('#mobileContent').innerHTML='';
     const updatePreview = () => {
       const c1=$('#gradientColor1').value, c2=$('#gradientColor2').value, angle=Number($('#gradientAngle').value);
       $('#gradientAngleValue').textContent=angle+'°';
