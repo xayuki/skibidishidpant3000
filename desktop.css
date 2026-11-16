@@ -293,3 +293,336 @@
   #mobileApp.xaynet-desktop-app[data-theme="gradient"]>.desktop-sidebar-content { background:transparent; }
   #mobileApp.xaynet-desktop-app[data-theme="gradient"] .desktop-welcome { background:transparent; }
 }
+
+/* Desktop layout corrections and proper standalone views. */
+@media (min-width: 751px) {
+  #mobileApp.xaynet-desktop-app{
+    --xay-rail:var(--xyd-rail);
+    --xay-sidebar:var(--xyd-sidebar);
+    width:100vw!important;max-width:100vw!important;
+    grid-template-columns:var(--xyd-rail) minmax(270px,var(--xyd-sidebar)) minmax(0,1fr)!important;
+    grid-template-rows:64px minmax(0,1fr)!important;
+  }
+
+  /* The new rail has its own brand button; remove the legacy pseudo-logo. */
+  #mobileApp.xaynet-desktop-app>.desktop-rail::before,
+  #mobileApp.xaynet-desktop-app>.desktop-rail::after{
+    content:none!important;display:none!important
+  }
+
+  /* Keep the inbox panel pinned to the actual second grid column. */
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-head,
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content{
+    left:auto!important;right:auto!important;inset:auto!important;
+    transform:none!important;translate:none!important;
+    grid-column:2!important;width:100%!important;max-width:100%!important;
+    min-width:0!important;margin:0!important;box-sizing:border-box
+  }
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-head{grid-row:1!important}
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content{
+    grid-row:2!important;overflow-x:hidden!important;overflow-y:auto!important;
+    padding:14px 12px 22px!important
+  }
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content .mobile-search,
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content .mobile-section-label,
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content .mobile-dm-list,
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content .mobile-friend-tabs{
+    width:100%!important;max-width:100%!important;margin-left:0!important;margin-right:0!important;
+    box-sizing:border-box
+  }
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content .mobile-dm-list{padding:0!important}
+  #mobileApp.xaynet-desktop-app>.desktop-sidebar-content .mobile-search{padding:0 11px!important}
+
+  /* There is a real welcome panel now, not a generated pseudo-element. */
+  #mobileApp.xaynet-desktop-app::after{content:none!important;display:none!important}
+  #mobileApp.xaynet-desktop-app>.desktop-main-view{
+    grid-column:3;grid-row:1/3;position:relative;z-index:6;
+    display:block;width:100%;height:100%;min-width:0;min-height:0;
+    margin:0;padding:0;overflow-x:hidden;overflow-y:auto;
+    background:#000;color:#f2f3f5;scrollbar-width:thin;scrollbar-color:#333 transparent
+  }
+  #mobileApp.xaynet-desktop-app>.desktop-main-view[hidden]{display:none!important}
+  #mobileApp.xaynet-desktop-app>.desktop-main-view::-webkit-scrollbar{width:8px}
+  #mobileApp.xaynet-desktop-app>.desktop-main-view::-webkit-scrollbar-thumb{background:#303030;border-radius:8px}
+  #mobileApp.xaynet-desktop-app>.desktop-chat-workspace{z-index:3}
+  #mobileApp.xaynet-desktop-app>.desktop-welcome{z-index:1}
+
+  /* Avatar status dots sit partly outside the image, not over the face. */
+  #mobileApp .desktop-rail .mobile-tab-avatar{
+    position:relative;display:block;flex:0 0 30px;width:30px;height:30px;overflow:visible
+  }
+  #mobileApp .desktop-rail .mobile-tab-avatar>img{
+    display:block;width:30px;height:30px;border-radius:50%!important;object-fit:cover
+  }
+  #mobileApp .desktop-rail .mobile-tab-avatar>i{
+    position:absolute;right:-3px;bottom:-2px;z-index:2;
+    width:10px;height:10px;border:2px solid #080808;border-radius:50%;
+    background:#747f8d
+  }
+  #mobileApp .desktop-rail .mobile-tab-avatar>i.online{background:#23a55a}
+  #mobileApp .desktop-rail .mobile-tab-avatar>i.offline{background:#747f8d}
+
+  /* Grouped messages already have a 36px time gutter. Do not add another indent. */
+  #mobileApp .desktop-chat-workspace .chat-message{align-items:flex-start;min-width:0}
+  #mobileApp .desktop-chat-workspace .chat-message-gutter-time{
+    display:flex;flex:0 0 38px;width:38px;min-width:38px;
+    margin:0;padding-top:2px;opacity:0;justify-content:center;
+    color:#777;font-size:9px;line-height:13px
+  }
+  #mobileApp .desktop-chat-workspace .chat-message.grouped .chat-message-gutter-time{opacity:0}
+  #mobileApp .desktop-chat-workspace .chat-message.grouped:hover .chat-message-gutter-time{opacity:1}
+  #mobileApp .desktop-chat-workspace .chat-message.grouped .chat-message-body{
+    flex:1 1 auto;min-width:0;margin-left:0!important
+  }
+
+  /* The first-conversation View Profile action uses the app's dark button language. */
+  #mobileApp .desktop-chat-workspace .chat-profile-intro{
+    max-width:980px;padding:0 0 20px;margin:28px auto 24px
+  }
+  #mobileApp .desktop-chat-workspace .chat-profile-button{
+    display:inline-flex;align-items:center;justify-content:center;min-height:34px;
+    margin-top:13px;padding:0 14px;border:1px solid #303030;border-radius:8px;
+    background:#171717;color:#eee;font-size:12px;font-weight:700;cursor:pointer;
+    transition:background .15s ease,border-color .15s ease
+  }
+  #mobileApp .desktop-chat-workspace .chat-profile-button:hover{
+    background:#242424;border-color:#454545
+  }
+
+  /* Desktop profile: intentionally restrained, card-based, and centered in the main pane. */
+  #mobileApp .desktop-main-view .mobile-profile-page{
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.72fr);
+    gap:14px;width:100%;max-width:980px;margin:0 auto;padding:28px 34px 44px;
+    box-sizing:border-box
+  }
+  #mobileApp .desktop-main-view .profile-utility-row{
+    grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;
+    min-height:34px;gap:12px;padding:0 2px
+  }
+  #mobileApp .desktop-main-view .profile-presence-label{
+    display:flex;align-items:center;gap:8px;color:#aaa;font-size:10px;
+    font-weight:800;letter-spacing:.1em
+  }
+  #mobileApp .desktop-main-view .profile-presence-label>i{
+    display:block;width:7px;height:7px;border-radius:50%;background:#23a55a;
+    box-shadow:0 0 0 3px #23a55a20
+  }
+  #mobileApp .desktop-main-view .profile-quick-actions{display:flex;align-items:center;gap:8px}
+  #mobileApp .desktop-main-view .profile-quick-pill{
+    padding:7px 11px;border:1px solid #303030;border-radius:999px;
+    color:#aaa;font-size:9px;font-weight:800;letter-spacing:.09em
+  }
+  #mobileApp .desktop-main-view .profile-quick-actions>button,
+  #mobileApp .desktop-main-view .profile-hero-more{
+    display:grid;place-items:center;width:34px;height:34px;padding:0;
+    border:1px solid #303030;border-radius:9px;background:#111;color:#ddd;cursor:pointer
+  }
+  #mobileApp .desktop-main-view .profile-hero-card,
+  #mobileApp .desktop-main-view .profile-info-card{
+    min-width:0;overflow:hidden;border:1px solid #262626;border-radius:14px;
+    background:#080808;color:#eee;text-align:left
+  }
+  #mobileApp .desktop-main-view .profile-hero-card{grid-column:1/-1}
+  #mobileApp .desktop-main-view .profile-banner{
+    position:relative;height:150px;overflow:hidden;
+    background:linear-gradient(115deg,#1c1c1c 0%,#090909 56%,#242424 100%);
+    background-size:cover;background-position:center;background-repeat:no-repeat
+  }
+  #mobileApp .desktop-main-view .profile-banner:before,
+  #mobileApp .desktop-main-view .profile-banner:after{
+    content:"";position:absolute;width:260px;height:260px;right:-55px;top:-150px;
+    border:1px solid #ffffff12;border-radius:50%;pointer-events:none
+  }
+  #mobileApp .desktop-main-view .profile-banner:after{
+    width:190px;height:190px;right:25px;top:-112px
+  }
+  #mobileApp .desktop-main-view .profile-banner[style*="background-image"]:before,
+  #mobileApp .desktop-main-view .profile-banner[style*="background-image"]:after{display:none}
+  #mobileApp .desktop-main-view .profile-banner-mark{
+    position:absolute;right:22px;bottom:-5px;color:#ffffff0a;
+    font-size:122px;font-weight:1000;line-height:1
+  }
+  #mobileApp .desktop-main-view .profile-hero-content{
+    position:relative;display:grid;grid-template-columns:92px minmax(0,1fr) auto;
+    align-items:center;gap:16px;padding:0 22px 20px;margin-top:-42px
+  }
+  #mobileApp .desktop-main-view .profile-large-avatar{
+    position:relative;z-index:1;display:block;flex:none;width:92px;height:92px;
+    margin:0;overflow:visible;border:6px solid #080808;border-radius:50%
+  }
+  #mobileApp .desktop-main-view .profile-large-avatar>img{
+    display:block;width:100%;height:100%;border-radius:50%!important;object-fit:cover
+  }
+  #mobileApp .desktop-main-view .profile-large-avatar>i{
+    position:absolute;right:-2px;bottom:-1px;z-index:2;width:18px;height:18px;
+    border:3px solid #080808;border-radius:50%;background:#747f8d
+  }
+  #mobileApp .desktop-main-view .profile-large-avatar>i.online{background:#23a55a}
+  #mobileApp .desktop-main-view .profile-identity{
+    display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;margin:38px 0 0
+  }
+  #mobileApp .desktop-main-view .profile-identity>strong{
+    display:flex;align-items:center;flex-wrap:wrap;gap:8px;color:#fff;
+    font-size:22px;line-height:1.2;font-weight:800
+  }
+  #mobileApp .desktop-main-view .profile-identity>span{color:#929292;font-size:13px}
+  #mobileApp .desktop-main-view .xaynet-owner-badge{
+    padding:4px 7px;border:1px solid #4c4936;border-radius:5px;
+    background:#242116;color:#d7c98b;font-size:9px;font-weight:800;letter-spacing:.06em
+  }
+  #mobileApp .desktop-main-view .profile-actions{
+    display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;
+    gap:8px;min-width:0;margin:38px 0 0
+  }
+  #mobileApp .desktop-main-view .profile-actions>button{
+    display:inline-flex;align-items:center;justify-content:center;gap:7px;
+    min-height:38px;padding:0 13px;border:1px solid #363636;border-radius:8px;
+    background:#171717;color:#eee;font-size:11px;font-weight:750;white-space:nowrap;cursor:pointer
+  }
+  #mobileApp .desktop-main-view .profile-actions>button:hover,
+  #mobileApp .desktop-main-view .profile-quick-actions>button:hover{background:#242424}
+  #mobileApp .desktop-main-view .profile-actions>button:first-child{
+    background:#eee;color:#080808;border-color:#eee
+  }
+  #mobileApp .desktop-main-view .profile-actions>button:first-child:hover{background:#fff}
+  #mobileApp .desktop-main-view .profile-info-card{
+    display:block;width:100%;min-height:94px;padding:17px 18px;
+    font:inherit;cursor:default;box-sizing:border-box
+  }
+  #mobileApp .desktop-main-view .profile-card-heading{
+    display:flex;align-items:center;gap:8px;color:#858585;
+    font-size:10px;font-weight:850;letter-spacing:.1em
+  }
+  #mobileApp .desktop-main-view .profile-member-date{
+    display:flex;align-items:center;gap:10px;margin-top:14px;
+    color:#eee;font-size:13px;font-weight:650
+  }
+  #mobileApp .desktop-main-view .profile-member-date>i{color:#888}
+  #mobileApp .desktop-main-view .profile-connection{display:flex;align-items:center;gap:10px;margin-top:13px}
+  #mobileApp .desktop-main-view .profile-connection-icon{
+    display:grid;place-items:center;flex:none;width:36px;height:36px;
+    border:1px solid #303030;border-radius:10px;background:#141414;color:#eee
+  }
+  #mobileApp .desktop-main-view .profile-connection>div{
+    display:flex;flex-direction:column;gap:3px;min-width:0
+  }
+  #mobileApp .desktop-main-view .profile-connection strong{color:#eee;font-size:12px}
+  #mobileApp .desktop-main-view .profile-connection>div>span{color:#858585;font-size:11px}
+  #mobileApp .desktop-main-view .profile-no-connections{margin-top:13px;color:#858585;font-size:12px}
+  #mobileApp .desktop-main-view .profile-bio-card p{
+    margin:12px 0 0;color:#c8c8c8;font-size:13px;line-height:1.6;overflow-wrap:anywhere
+  }
+  #mobileApp .desktop-main-view .profile-friends-card,
+  #mobileApp .desktop-main-view .xaynet-admin-entry{
+    display:block;width:100%;min-height:94px;padding:17px 18px;
+    border:1px solid #262626;border-radius:14px;background:#080808;
+    color:#eee;text-align:left;cursor:pointer
+  }
+  #mobileApp .desktop-main-view .profile-friends-card:hover,
+  #mobileApp .desktop-main-view .xaynet-admin-entry:hover{background:#101010;border-color:#3a3a3a}
+  #mobileApp .desktop-main-view .profile-friends-row{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px
+  }
+  #mobileApp .desktop-main-view .profile-friend-stack{display:flex;align-items:center;padding-left:3px}
+  #mobileApp .desktop-main-view .profile-friend-stack img{
+    display:block;width:30px;height:30px;object-fit:cover;border:2px solid #080808;
+    border-radius:50%;margin-left:-3px
+  }
+  #mobileApp .desktop-main-view .profile-friend-stack img+img{margin-left:-8px}
+  #mobileApp .desktop-main-view .profile-friends-row>i{color:#777;font-size:11px}
+  #mobileApp .desktop-main-view .xaynet-admin-entry{
+    display:flex;align-items:center;justify-content:space-between;gap:12px
+  }
+  #mobileApp .desktop-main-view .xaynet-admin-entry>span{display:flex;flex-direction:column;gap:4px}
+  #mobileApp .desktop-main-view .xaynet-admin-entry strong{color:#eee;font-size:13px}
+  #mobileApp .desktop-main-view .xaynet-admin-entry small{color:#888;font-size:11px}
+
+  /* Activity is a real main-page view, not a narrow item list in the inbox rail. */
+  #mobileApp .desktop-main-view>.mobile-section-label{
+    display:flex;align-items:center;justify-content:space-between;
+    width:min(820px,calc(100% - 68px));min-height:32px;margin:35px auto 12px;
+    padding:0 2px;color:#888;font-size:10px;font-weight:800;letter-spacing:.12em
+  }
+  #mobileApp .desktop-main-view>.mobile-dm-list{
+    display:flex;flex-direction:column;gap:5px;width:min(820px,calc(100% - 68px));
+    margin:0 auto;padding:0
+  }
+  #mobileApp .desktop-main-view .notification-row{
+    display:flex;align-items:center;gap:13px;min-height:72px;width:100%;
+    margin:0;padding:12px;border:1px solid #222;border-radius:10px;
+    background:#080808;color:#eee;text-align:left;cursor:pointer
+  }
+  #mobileApp .desktop-main-view .notification-row:hover{background:#111;border-color:#333}
+  #mobileApp .desktop-main-view .notification-row .mobile-avatar-wrap{
+    position:relative;display:block;flex:0 0 42px;width:42px;height:42px;overflow:visible
+  }
+  #mobileApp .desktop-main-view .notification-row .mobile-avatar-wrap>img{
+    display:block;width:42px;height:42px;border-radius:50%!important;object-fit:cover
+  }
+  #mobileApp .desktop-main-view .notification-row .mobile-avatar-wrap>i{
+    position:absolute;right:-3px;bottom:-2px;z-index:2;
+    width:12px;height:12px;border:3px solid #080808;border-radius:50%;background:#747f8d
+  }
+  #mobileApp .desktop-main-view .notification-row .mobile-avatar-wrap>i.online{background:#23a55a}
+  #mobileApp .desktop-main-view .notification-row .mobile-avatar-wrap>i.offline{background:#747f8d}
+  #mobileApp .desktop-main-view .notification-row .mobile-dm-copy{
+    display:flex;flex:1;flex-direction:column;gap:4px;min-width:0;min-height:0
+  }
+  #mobileApp .desktop-main-view .notification-row .mobile-dm-copy strong{
+    color:#eee;font-size:13px;line-height:18px;font-weight:750
+  }
+  #mobileApp .desktop-main-view .notification-row .mobile-dm-copy span{
+    color:#888;font-size:12px;line-height:17px;white-space:normal;overflow-wrap:anywhere
+  }
+  #mobileApp .desktop-main-view .mobile-empty-state{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:65vh;padding:30px;color:#888;text-align:center
+  }
+  #mobileApp .desktop-main-view .mobile-empty-state>i{margin-bottom:14px;color:#666;font-size:30px}
+  #mobileApp .desktop-main-view .mobile-empty-state h2{margin:0 0 6px;color:#eee;font-size:16px;font-weight:750}
+  #mobileApp .desktop-main-view .mobile-empty-state p{max-width:280px;margin:0;color:#888;font-size:12px;line-height:1.6}
+
+  /* All controls in this surface must look like XAYNET, never browser defaults. */
+  #mobileApp .desktop-main-view button,
+  #mobileApp .desktop-chat-workspace .chat-profile-button{
+    font-family:inherit;appearance:none;-webkit-appearance:none
+  }
+  #mobileApp .desktop-main-view button:focus-visible,
+  #mobileApp .desktop-chat-workspace button:focus-visible{
+    outline:2px solid #888;outline-offset:2px
+  }
+
+  /* Theme variants retain the selected app theme for the new views. */
+  #mobileApp.xaynet-desktop-app[data-theme="light"]>.desktop-main-view{background:#f2f3f5;color:#232428}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-hero-card,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-info-card,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-friends-card,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .xaynet-admin-entry,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .notification-row{
+    background:#fff;border-color:#dfe1e5;color:#232428
+  }
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-identity>strong,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-member-date,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-connection strong,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-friends-card,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .xaynet-admin-entry,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .notification-row .mobile-dm-copy strong{color:#232428}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-actions>button{background:#f2f3f5;color:#232428;border-color:#dfe1e5}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-actions>button:first-child{background:#232428;color:#fff;border-color:#232428}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-quick-pill{color:#555;border-color:#dfe1e5}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-quick-actions>button{background:#fff;color:#555;border-color:#dfe1e5}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-member-date,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-bio-card p{color:#30343b}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .profile-connection-icon{background:#f2f3f5;color:#333;border-color:#dfe1e5}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .notification-row .mobile-dm-copy span,
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .mobile-empty-state p{color:#686d75}
+  #mobileApp.xaynet-desktop-app[data-theme="light"] .desktop-main-view .mobile-empty-state h2{color:#232428}
+  #mobileApp.xaynet-desktop-app[data-theme="gradient"]>.desktop-main-view{background:var(--custom-gradient)}
+  
+  @media(max-width:1050px){
+    #mobileApp .desktop-main-view .mobile-profile-page{grid-template-columns:minmax(0,1fr);max-width:800px;padding:22px 22px 36px}
+    #mobileApp .desktop-main-view .profile-hero-content{grid-template-columns:82px minmax(0,1fr);gap:12px;padding:0 16px 16px}
+    #mobileApp .desktop-main-view .profile-large-avatar{width:82px;height:82px}
+    #mobileApp .desktop-main-view .profile-actions{grid-column:1/-1;margin:0}
+  }
+}
