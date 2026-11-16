@@ -407,6 +407,14 @@
     display:block;width:7px;height:7px;border-radius:50%;background:#23a55a;
     box-shadow:0 0 0 3px #23a55a20
   }
+  #mobileApp .desktop-main-view .profile-presence-label>i.offline{
+    background:#747f8d;box-shadow:0 0 0 3px #747f8d20
+  }
+  #mobileApp .desktop-main-view .profile-back-button{
+    display:grid;place-items:center;flex:none;width:34px;height:34px;padding:0;
+    border:1px solid #303030;border-radius:9px;background:#111;color:#ddd;cursor:pointer
+  }
+  #mobileApp .desktop-main-view .profile-back-button:hover{background:#242424}
   #mobileApp .desktop-main-view .profile-quick-actions{display:flex;align-items:center;gap:8px}
   #mobileApp .desktop-main-view .profile-quick-pill{
     padding:7px 11px;border:1px solid #303030;border-radius:999px;
