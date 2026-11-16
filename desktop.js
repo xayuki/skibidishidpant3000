@@ -17,6 +17,7 @@
     '</nav>' +
     '<header class="mobile-topbar desktop-sidebar-head"><div class="mobile-top-title"><strong id="mobileTitle">Messages</strong><span id="mobileSubtitle">Your conversations</span></div><button class="mobile-top-action" id="mobileNew" type="button" aria-label="New message" title="New message"><i class="fa-solid fa-pen-to-square"></i></button></header>' +
     '<main class="mobile-content desktop-sidebar-content" id="mobileContent"></main>' +
+    '<section class="desktop-welcome" id="desktopWelcome"><div class="desktop-welcome-mark">X</div><strong>your space, your people.</strong><span>select a conversation to pick up where you left off.</span></section>' +
     '<section class="mobile-chat-screen desktop-chat-workspace" id="mobileChatScreen" aria-hidden="true">' +
       '<header class="mobile-chat-header desktop-chat-header">' +
         '<span class="mobile-avatar-wrap chat-header-avatar"><img id="mobileChatAvatar" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" alt=""><i id="mobileChatPresence" class="offline"></i></span>' +
@@ -27,6 +28,9 @@
       '<form class="mobile-composer" id="mobileComposer"><button type="button" class="composer-add" id="composerAdd" aria-label="Add attachment" title="Add attachment"><i class="fa-solid fa-plus"></i></button><input id="mobileMessageInput" autocomplete="off" placeholder="Message @user..." aria-label="Message"><button type="button" class="composer-emoji" id="composerEmoji" aria-label="Emoji" title="Emoji"><i class="fa-regular fa-face-smile"></i></button><button type="submit" class="composer-send" aria-label="Send message" title="Send message"><i class="fa-solid fa-arrow-up"></i></button></form>' +
     '</section>' +
     '<div class="mobile-modal-backdrop" id="mobileModalBackdrop"><section class="mobile-modal" id="mobileModal" role="dialog" aria-modal="true"></section></div>';
+  const welcome = document.getElementById('desktopWelcome');
+  window.addEventListener('xaynet:open-chat', () => { if (welcome) welcome.hidden = true; });
+  window.addEventListener('xaynet:close-chat', () => { if (welcome) welcome.hidden = false; });
   let wasDesktop = true;
   desktopQuery.addEventListener?.('change', event => {
     if (event.matches !== wasDesktop) window.location.reload();
